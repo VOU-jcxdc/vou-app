@@ -15,10 +15,6 @@ const LIGHT_THEME: Theme = {
   dark: false,
   colors: NAV_THEME.light,
 };
-const DARK_THEME: Theme = {
-  dark: true,
-  colors: NAV_THEME.dark,
-};
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -31,7 +27,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const { colorScheme, setColorScheme, isDarkColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
 
   React.useEffect(() => {
@@ -64,10 +60,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+    <ThemeProvider value={LIGHT_THEME}>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-        <Stack />
+        <StatusBar style={'dark'} />
+        <Stack>
+          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+          <Stack.Screen name='+not-found' />
+        </Stack>
       </QueryClientProvider>
     </ThemeProvider>
   );
