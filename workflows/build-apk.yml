@@ -1,0 +1,92 @@
+name: Build and release APK
+
+on: 
+  push:
+    branches:
+      - main
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Access workspace 
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+      
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4
+      with: 
+        version: 'latest'
+
+    - name: Install dependencies without updating lockfile
+      run: pnpm i --frozen-lockfile
+
+    - name: Generate 'android' and 'ios' folder
+      run: pnpm expo prebuild
+
+    - name: Set up Java SDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '22'
+
+    - name: Set up gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: 8.8
+
+    - name: Build APK
+      run: gradle build
+      working-directory: android
+
+    - name: Sign APK
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+          # override default build-tools version (33.0.0) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+    - name: Get begin-sha (Last commit in the previous release)
+      id: begin-sha
+      run: |
+        git fetch --tags 
+        echo "::set-output name=begin-sha::$(git rev-list --tags --max-count=1 --skip=1)"
+
+    - name: Get commit messages between releases
+      id: commit-messages
+      run: |
+        git log ${{ steps.begin-sha.outputs.begin-sha }}..HEAD --pretty=format:"%h: %s" > commit-messages.txt
+        echo "::set-output name=body-messages::$(cat commit-messages.txt)"
+
+    - name: Read commit messages and use it as a body of new release 
+      id: body-messages
+      shell: bash
+      run: |    
+          r=$(cat commit-messages.txt)                      # <--- Read commit-messages.txt (Provide correct path as per your repo)
+          r="${r//'%'/'%25'}"                               # Multiline escape sequences for %
+          r="${r//$'\n'/'%0A'}"                             # Multiline escape sequences for '\n'
+          r="${r//$'\r'/'%0D'}"                             # Multiline escape sequences for '\r'
+          echo "BODY=$r" >> $GITHUB_OUTPUT                  # <--- Set environment variable BODY
+    
+    - name: Get version from package.json
+      id: get-version
+      uses: beaconbrigade/package-json-version@v0.3
+      with:
+        path: .
+
+    - name: Upload APK
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.SECRET_TOKEN }}
+        file: android/app/build/outputs/apk/release/app-release-signed.apk
+        asset_name: Demo.apk
+        tag: ${{ steps.get-version.outputs.version }}
+        overwrite: true
+        body: "${{ steps.body-messages.outputs.BODY }}"
