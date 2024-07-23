@@ -15,16 +15,17 @@ jobs:
       with:
         fetch-depth: 0
       
-    - name: Set up pnpm
-      uses: pnpm/action-setup@v4
-      with: 
-        version: 'latest'
+    - name: Set up npm
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
 
     - name: Install dependencies without updating lockfile
-      run: pnpm i --frozen-lockfile
+      run: npm ci
 
     - name: Generate 'android' and 'ios' folder
-      run: pnpm expo prebuild
+      run: npx expo prebuild
 
     - name: Set up Java SDK
       uses: actions/setup-java@v4
