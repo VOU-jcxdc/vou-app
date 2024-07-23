@@ -1,0 +1,31 @@
+# .eslintignore
+
+# Ignore node_modules
+node_modules/
+
+# Ignore build directories
+build/
+dist/
+
+# Ignore specific files
+coverage/
+*.min.js
+*.bundle.js
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore temporary files
+tmp/
+temp/
+
+# Ignore the output of create-react-app builds
+build/
+public/
+
+# Ignore Expo asset directories
+assets/
+
+scripts/
+*.d.ts
