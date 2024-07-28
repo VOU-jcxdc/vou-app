@@ -26,6 +26,7 @@ export default function SignIn() {
 
   const onSubmit = (data: SignInFormData) => {
     console.log(data);
+    router.replace('(tabs)')
   };
 
   return (

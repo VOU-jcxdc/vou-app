@@ -7,6 +7,7 @@ import { Label } from '~/components/ui/label';
 import { Text } from '~/components/ui/text';
 import { Keyboard } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native';
+import { router } from 'expo-router';
 
 type VerifyOTPFormData = {
   otp: string;
@@ -32,7 +33,10 @@ export default function VerifyOTP() {
   const route = useRoute<RouteProp<RouteParams, 'VerifyOTP'>>();
   const { phone } = route.params;
 
-  const onSubmit = (data: VerifyOTPFormData) => console.log(data);
+  const onSubmit = (data: VerifyOTPFormData) => {
+    console.log(data);
+    router.replace('(tabs)');
+  };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1'>
