@@ -19,13 +19,13 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView className='h-full justify-around items-center'>
+    <SafeAreaView className='h-full items-center justify-around'>
       <View className='w-full gap-6'>
         <View className='w-full items-center gap-6'>
           <ProfileAvatar uri={user?.image} alt={user?.userName} />
           <Text className='text-3xl font-semibold'>{user?.fullName}</Text>
         </View>
-        <View className='w-full px-10 gap-6'>
+        <View className='w-full gap-6 px-10'>
           <ProfileInput label='Username' value={user?.userName} readOnly={true} />
           <ProfileInput label='Full Name' value={user?.fullName} readOnly={true} />
           <ProfileInput label='Phone' value={user?.phone} readOnly={true} />
@@ -34,8 +34,8 @@ export default function Profile() {
       </View>
 
       <View className='w-full px-10'>
-        <Button className='bg-purple-500 rounded' onPress={handleSignOut}>
-          <Text className='text-white font-bold'>Sign Out</Text>
+        <Button className='rounded bg-primary' onPress={handleSignOut}>
+          <Text className='font-bold text-primary-foreground'>Sign Out</Text>
         </Button>
       </View>
     </SafeAreaView>

@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Keyboard, SafeAreaView, TouchableWithoutFeedback, View } from 'react-native';
+
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Text } from '~/components/ui/text';
-import { Controller, useForm } from 'react-hook-form';
 
 type SignInFormData = {
   phone: string;

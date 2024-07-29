@@ -128,46 +128,36 @@ export default function EditProfile() {
 
   return (
     <KeyboardAvoidingView className='flex-1' behavior={Platform.OS === 'ios' ? 'position' : 'height'}>
-      <SafeAreaView className='h-full justify-around items-center'>
+      <SafeAreaView className='h-full items-center justify-around'>
         <View className='w-full gap-6'>
           <View className='w-full'>
             <Pressable className='items-center gap-6' onPress={() => setModalVisible(true)}>
               <ProfileAvatar uri={image || user?.image} alt={user?.userName} />
-              <Text className='text-slate-300'>Edit Profile Picture</Text>
+              <Text className='text-foreground'>Edit Profile Picture</Text>
             </Pressable>
           </View>
 
           <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-            <View className='w-full px-10 gap-6'>
+            <View className='w-full gap-6 px-10'>
               <Controller
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput
-                    label='Username'
-                    value={value}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    error={errors.userName?.type}
-                  />
+                  <ProfileInput label='Username' value={value} onBlur={onBlur} onChangeText={onChange} />
                 )}
                 name='userName'
                 rules={{ required: true }}
               />
+              {errors.userName && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
 
               <Controller
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput
-                    label='Full Name'
-                    value={value}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    error={errors.fullName?.type}
-                  />
+                  <ProfileInput label='Full Name' value={value} onBlur={onBlur} onChangeText={onChange} />
                 )}
                 name='fullName'
                 rules={{ required: true }}
               />
+              {errors.fullName && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
 
               <Controller
                 control={control}
@@ -178,34 +168,29 @@ export default function EditProfile() {
                     onBlur={onBlur}
                     onChangeText={onChange}
                     keyboardType='phone-pad'
-                    error={errors.phone?.type}
                   />
                 )}
                 name='phone'
                 rules={{ required: true, pattern: /^[0-9]{10}$/ }}
               />
+              {errors.phone && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
 
               <Controller
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput
-                    label='Email'
-                    value={value}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    error={errors.email?.type}
-                  />
+                  <ProfileInput label='Email' value={value} onBlur={onBlur} onChangeText={onChange} />
                 )}
                 name='email'
                 rules={{ required: true, pattern: /^\S+@\S+$/i }}
               />
+              {errors.email && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
           </TouchableWithoutFeedback>
         </View>
 
         <View className='w-full px-10'>
-          <Button className='bg-purple-500 rounded' onPress={handleSubmit(onSubmit)}>
-            <Text className='text-white font-bold'>Save</Text>
+          <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)}>
+            <Text className='font-bold text-primary-foreground'>Save</Text>
           </Button>
         </View>
 

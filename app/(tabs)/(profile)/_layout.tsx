@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, Stack } from 'expo-router';
 
-export default function EventsLayout() {
+export default function ProfileLayout() {
   return (
     <Stack>
       <Stack.Screen

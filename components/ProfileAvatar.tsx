@@ -12,7 +12,7 @@ export default function ProfileAvatar({ uri, alt }: ProfileAvatarProps) {
 
   return (
     <View>
-      <Avatar className='w-40 h-40' alt={alt}>
+      <Avatar className='h-40 w-40' alt={alt}>
         <AvatarImage source={{ uri: uri }} />
         <AvatarFallback className='bg-slate-400'>
           <Text className='text-6xl'>{fallback}</Text>
