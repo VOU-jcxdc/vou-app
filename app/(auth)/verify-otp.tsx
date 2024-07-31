@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -40,6 +42,7 @@ export default function VerifyOTP() {
   const inputRefs = useRef<TextInput[]>([]);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
 
   useEffect(() => {
     // Auto-focus the first input when the component mounts
@@ -47,11 +50,13 @@ export default function VerifyOTP() {
       inputRefs.current[0].focus();
       setFocusedIndex(0);
     }
+
+    signUpWithPhoneNumber(phone);
   }, []);
 
   const onSubmit = (data: VerifyOTPFormData) => {
     console.log(data);
-    router.replace('(tabs)');
+    confirmOTP(data.otp);
   };
 
   const handleTextChange = (text: string, index: number, onChange: (...event: any[]) => void) => {
@@ -85,6 +90,52 @@ export default function VerifyOTP() {
     }
   };
 
+  // Handle login
+  async function onAuthStateChanged(user: any) {
+    if (user) {
+      // Some Android devices can automatically process the verification code (OTP) message, and the user would NOT need to enter the code.
+      // Actually, if he/she tries to enter it, he/she will get an error message because the code was already used in the background.
+      // In this function, make sure you hide the component(s) for entering the code and/or navigate away from this screen.
+      // It is also recommended to display a message to the user informing him/her that he/she has successfully logged in.
+
+      await AsyncStorage.setItem('isAuthenticated', 'true');
+      router.replace('(tabs)');
+    }
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  const signUpWithPhoneNumber = async (phoneNumber: string) => {
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      setConfirm(confirmation);
+    } catch (error) {
+      console.error('Error sending OTP: ', error);
+    }
+  };
+
+  const confirmOTP = async (otp: string) => {
+    try {
+      const userCredential = await confirm?.confirm(otp);
+      // const user = userCredential?.user;
+
+      // const userDocument = await firestore().collection('users').doc(user?.uid).get();
+      // if (!userDocument.exists) {
+      //   await firestore().collection('users').doc(user?.uid).set({
+      //     phoneNumber: user?.phoneNumber,
+      //   });
+      // }
+
+      // await AsyncStorage.setItem('isAuthenticated', 'true');
+      // router.replace('(tabs)');
+    } catch (error) {
+      console.error('Error confirming OTP: ', error);
+    }
+  };
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1'>
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
@@ -102,7 +153,7 @@ export default function VerifyOTP() {
                           <Input
                             key={index}
                             ref={(ref) => (inputRefs.current[index] = ref!)}
-                            className={`w-16 h-16 text-center text-lg rounded-xl bg-background ${focusedIndex === index && 'border-2 border-primary'}`}
+                            className={`w-14 text-center text-lg rounded-xl bg-background ${focusedIndex === index && 'border-2 border-primary'}`}
                             onBlur={onBlur}
                             value={otp[index]}
                             onChangeText={(text) => handleTextChange(text, index, onChange)}
@@ -121,10 +172,16 @@ export default function VerifyOTP() {
               </View>
             </View>
           </View>
-          <View className='flex-1 justify-end'>
+          <View className='flex-1 justify-end gap-3'>
             <Button onPress={handleSubmit(onSubmit)} className='w-full'>
               <Text>Submit</Text>
             </Button>
+            <View className='flex flex-row items-center justify-center'>
+              <Text className='text-center text-foreground'>Didn't receive an OTP?</Text>
+              <Button variant='link' size='sm' onPress={() => signUpWithPhoneNumber(phone)}>
+                <Text className='text-primary'>Resend OTP</Text>
+              </Button>
+            </View>
           </View>
         </SafeAreaView>
       </TouchableWithoutFeedback>

@@ -85,7 +85,6 @@ export default function SignUp() {
     }
     phone = phone.replace(/\s+/g, ''); // Remove all spaces
     console.log(JSON.stringify({ ...data, phone }));
-    router.replace('(tabs)');
     router.push(`verify-otp?phone=${encodeURIComponent(phone)}`);
   };
 
