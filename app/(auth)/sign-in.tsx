@@ -1,32 +1,38 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Keyboard, SafeAreaView, TouchableWithoutFeedback, View } from 'react-native';
+import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Text } from '~/components/ui/text';
-import { Controller, useForm } from 'react-hook-form';
+import { formatPhoneNumber, phoneRegex } from '~/utils/PhoneUtils';
 
-type SignInFormData = {
-  phone: string;
-  password: string;
-};
+const signInFormSchema = z.object({
+  phone: z.string().min(1, 'Phone number is required').regex(phoneRegex, 'Invalid phone format'),
+  password: z.string().min(1, 'Password is required').min(5, 'Password must be at least 5 characters'),
+});
+type SignInFormData = z.infer<typeof signInFormSchema>;
 
 export default function SignIn() {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignInFormData>({
+  const { control, handleSubmit } = useForm<SignInFormData>({
     defaultValues: {
-      phone: '',
+      phone: '+84 ',
       password: '',
     },
+    resolver: zodResolver(signInFormSchema),
   });
 
   const onSubmit = (data: SignInFormData) => {
-    console.log(data);
-    router.replace('(tabs)')
+    let { phone } = data;
+    if (phone.startsWith('+84 0')) {
+      phone = '+84 ' + phone.slice(5); // Remove the '0' after '+84 '
+    }
+    phone = phone.replace(/\s+/g, ''); // Remove all spaces
+    console.log(JSON.stringify({ ...data, phone }));
+    router.replace('(tabs)');
   };
 
   return (
@@ -41,23 +47,22 @@ export default function SignIn() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='phone'
-                    placeholder='+84123456789'
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    textContentType='telephoneNumber'
-                    keyboardType='phone-pad'
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='phone'
+                      placeholder='+84 123456789'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(formatPhoneNumber(text))}
+                      value={value}
+                      textContentType='telephoneNumber'
+                      keyboardType='phone-pad'
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='phone'
               />
-              {errors.phone && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
             <View>
               <Label nativeID='password' className='mb-2'>
@@ -65,27 +70,22 @@ export default function SignIn() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: 'Password is required',
-                  minLength: {
-                    value: 5,
-                    message: 'Password must be at least 5 characters long',
-                  },
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='password'
-                    placeholder='*****'
-                    onBlur={onBlur}
-                    onChangeText={(text) => onChange(text.trim())}
-                    value={value}
-                    textContentType='password'
-                    secureTextEntry
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='password'
+                      placeholder='*****'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(text.trim())}
+                      value={value}
+                      textContentType='password'
+                      secureTextEntry
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='password'
               />
-              {errors.password && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
           </View>
         </View>

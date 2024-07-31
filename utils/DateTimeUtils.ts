@@ -3,13 +3,18 @@ export const formatDOB = (text: string) => {
   const cleaned = text.replace(/\D/g, '');
 
   // Format the cleaned input as DD-MM-YYYY
-  let formatted = cleaned;
-  if (cleaned.length > 4) {
-    formatted = `${cleaned.slice(6, 8)}-${cleaned.slice(4, 6)}-${cleaned.slice(0, 4)}`;
+  let formatted = '';
+  if (cleaned.length > 0) {
+    formatted = cleaned.slice(0, 2);
   }
-  if (cleaned.length > 6) {
-    formatted = `${cleaned.slice(6, 8)}-${cleaned.slice(4, 6)}-${cleaned.slice(0, 4)}`;
+  if (cleaned.length > 2) {
+    formatted += `-${cleaned.slice(2, 4)}`;
+  }
+  if (cleaned.length > 4) {
+    formatted += `-${cleaned.slice(4, 8)}`;
   }
 
   return formatted;
 };
+
+export const dateRegex = /^\d{2}-\d{2}-\d{4}$/;

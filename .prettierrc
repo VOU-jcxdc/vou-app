@@ -10,6 +10,5 @@
   "endOfLine": "auto",
   "tabWidth": 2,
   "useTabs": false,
-  "plugins": ["prettier-plugin-tailwindcss", "prettier-plugin-organize-imports"],
-  "organizeImportsSkipDestructiveCodeActions": true
+  "plugins": ["prettier-plugin-tailwindcss", "prettier-plugin-organize-imports"]
 }

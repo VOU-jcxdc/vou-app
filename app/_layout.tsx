@@ -64,7 +64,7 @@ export default function RootLayout() {
 const AuthStack = () => {
   const { isAuthenticated } = useAuth();
 
-  // console.log(isAuthenticated);
+  console.log(isAuthenticated);
 
   return (
     <Stack initialRouteName={isAuthenticated ? '(tabs)' : '(auth)'}>

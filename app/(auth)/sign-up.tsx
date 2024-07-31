@@ -1,41 +1,52 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import React from 'react';
-import { SafeAreaView, View, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Keyboard, SafeAreaView, TouchableWithoutFeedback, View } from 'react-native';
+import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { Text } from '~/components/ui/text';
-import { Controller, useForm } from 'react-hook-form';
-import { formatDOB } from '~/utils/DateTimeUtils';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-// import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Text } from '~/components/ui/text';
+import { Gender } from '~/lib/types/enum';
+import { dateRegex, formatDOB } from '~/utils/DateTimeUtils';
+import { formatPhoneNumber } from '~/utils/PhoneUtils';
 
-type SignUpFormData = {
-  phone: string;
-  password: string;
-  role: string;
-  username: string;
-  data: {
-    dob: string;
-    email: string;
-    gender: string;
-  };
-};
+const signUpFormSchema = z
+  .object({
+    phone: z.string().min(1, 'Phone number is required'),
+    password: z.string().min(1, 'Password is required').min(5, 'Password must be at least 5 characters'),
+    confirmPass: z.string().min(1, 'Confirm password is required'),
+    role: z.string(),
+    username: z.string().min(1, 'Username is required'),
+    data: z.object({
+      dob: z
+        .string()
+        .min(1, 'Date of birth is required')
+        .refine((val) => dateRegex.test(val), {
+          message: 'Invalid date format, must be DD-MM-YYYY',
+        }),
+      email: z.string().min(1, 'Email is required').email('Invalid email format'),
+      gender: z.enum(Object.values(Gender) as [Gender, ...Gender[]]),
+    }),
+  })
+  .refine((data) => data.password === data.confirmPass, { message: 'Passwords do not match', path: ['confirmPass'] });
+type SignUpFormData = z.infer<typeof signUpFormSchema>;
 
 // Define the radio button options
 const genderOptions = [
   {
     id: '1', // unique id for each option
-    value: 'female',
+    value: Gender.FEMALE,
   },
   {
     id: '2',
-    value: 'male',
+    value: Gender.MALE,
   },
   {
     id: '3',
-    value: 'other',
+    value: Gender.OTHER,
   },
 ];
 
@@ -51,53 +62,32 @@ function RadioGroupItemWithLabel({ value, onLabelPress }: { value: string; onLab
 }
 
 export default function SignUp() {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpFormData>({
+  const { control, handleSubmit } = useForm<SignUpFormData>({
     defaultValues: {
-      phone: '',
+      phone: '+84 ',
       password: '',
       role: 'player',
       username: '',
       data: {
         dob: '',
         email: '',
-        gender: '',
+        gender: Gender.FEMALE,
       },
     },
+    resolver: zodResolver(signUpFormSchema),
   });
-  // const [confirm, setConfirm] = React.useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
 
   const onSubmit = (data: SignUpFormData) => {
     console.log({ ...data, data: { ...data.data, dob: new Date(data.data.dob) } });
-    const phone = data.phone;
+    let { phone } = data;
+    if (phone.startsWith('+84 0')) {
+      phone = '+84 ' + phone.slice(5); // Remove the '0' after '+84 '
+    }
+    phone = phone.replace(/\s+/g, ''); // Remove all spaces
+    console.log(JSON.stringify({ ...data, phone }));
+    router.replace('(tabs)');
     router.push(`verify-otp?phone=${encodeURIComponent(phone)}`);
   };
-
-  // const signInWithPhoneNumber = async (phone: string) => {
-  //   try {
-  //     const confirmation = await auth().signInWithPhoneNumber(phone);
-  //     setConfirm(confirmation);
-  //   } catch (error) {
-  //     console.error('Phone authentication error:', error);
-  //   }
-  // };
-
-  // const confirmCode = async (code: string) => {
-  //   try {
-  //     const userCredential = await confirm?.confirm(code);
-  //     const user = userCredential?.user;
-
-  //     if (user) {
-  //       await AsyncStorage.setItem('isAuthenticated', 'true');
-  //       router.push('(tabs)');
-  //     }
-  //   } catch (error) {
-  //     console.error('Phone code confirmation error:', error);
-  //   }
-  // };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -111,22 +101,21 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='username'
-                    placeholder='John Doe'
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    textContentType='name'
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='username'
+                      placeholder='John Doe'
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      textContentType='name'
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='username'
               />
-              {errors.username && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
             <View>
               <Label nativeID='password' className='mb-2'>
@@ -134,27 +123,45 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: 'Password is required',
-                  minLength: {
-                    value: 5,
-                    message: 'Password must be at least 5 characters long',
-                  },
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='password'
-                    placeholder='*****'
-                    onBlur={onBlur}
-                    onChangeText={(text) => onChange(text.trim())}
-                    value={value}
-                    textContentType='password'
-                    secureTextEntry
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='password'
+                      placeholder='*****'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(text.trim())}
+                      value={value}
+                      textContentType='password'
+                      secureTextEntry
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='password'
               />
-              {errors.password && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
+            </View>
+            <View>
+              <Label nativeID='confirm-password' className='mb-2'>
+                Confirm Password
+              </Label>
+              <Controller
+                control={control}
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='confirm-password'
+                      placeholder='*****'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(text.trim())}
+                      value={value}
+                      textContentType='password'
+                      secureTextEntry
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
+                )}
+                name='confirmPass'
+              />
             </View>
             <View>
               <Label nativeID='dob' className='mb-2'>
@@ -162,23 +169,22 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='dob'
-                    placeholder='DD-MM-YYYY'
-                    onBlur={onBlur}
-                    onChangeText={(text) => onChange(formatDOB(text))}
-                    value={value}
-                    textContentType='none'
-                    keyboardType='number-pad'
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='dob'
+                      placeholder='DD-MM-YYYY'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(formatDOB(text))}
+                      value={value}
+                      textContentType='none'
+                      keyboardType='number-pad'
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='data.dob'
               />
-              {errors.data?.dob && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
             <View>
               <Label nativeID='email' className='mb-2'>
@@ -186,23 +192,22 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='email'
-                    placeholder='example@gmail.com'
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    textContentType='emailAddress'
-                    keyboardType='email-address'
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='email'
+                      placeholder='example@gmail.com'
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      textContentType='emailAddress'
+                      keyboardType='email-address'
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='data.email'
               />
-              {errors.data?.email && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
             <View>
               <Label nativeID='phone' className='mb-2'>
@@ -210,23 +215,22 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    aria-labelledby='phone'
-                    placeholder='+84123456789'
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    textContentType='telephoneNumber'
-                    keyboardType='phone-pad'
-                  />
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <Input
+                      aria-labelledby='phone'
+                      placeholder='+84 123456789'
+                      onBlur={onBlur}
+                      onChangeText={(text) => onChange(formatPhoneNumber(text))}
+                      value={value}
+                      textContentType='telephoneNumber'
+                      keyboardType='phone-pad'
+                    />
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='phone'
               />
-              {errors.phone && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
             <View>
               <Label nativeID='gender' className='mb-2'>
@@ -234,23 +238,22 @@ export default function SignUp() {
               </Label>
               <Controller
                 control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <RadioGroup value={value} onValueChange={onChange} className='flex flex-row gap-3'>
-                    {genderOptions.map((option) => (
-                      <RadioGroupItemWithLabel
-                        key={option.id}
-                        value={option.value}
-                        onLabelPress={() => onChange(option.value)}
-                      />
-                    ))}
-                  </RadioGroup>
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                  <>
+                    <RadioGroup value={value} onValueChange={onChange} className='flex flex-row gap-3'>
+                      {genderOptions.map((option) => (
+                        <RadioGroupItemWithLabel
+                          key={option.id}
+                          value={option.value}
+                          onLabelPress={() => onChange(option.value)}
+                        />
+                      ))}
+                    </RadioGroup>
+                    {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
+                  </>
                 )}
                 name='data.gender'
               />
-              {errors.data?.gender && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
           </View>
         </View>
