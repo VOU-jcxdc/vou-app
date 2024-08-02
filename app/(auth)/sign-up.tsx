@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { Text } from '~/components/ui/text';
 import { Gender } from '~/lib/types/enum';
 import { dateRegex, formatDOB } from '~/utils/DateTimeUtils';
-import { formatPhoneNumber } from '~/utils/PhoneUtils';
+import { formatPhoneNumber, formatPhoneNumberSubmit } from '~/utils/PhoneUtils';
 
 const signUpFormSchema = z
   .object({
@@ -20,14 +20,14 @@ const signUpFormSchema = z
     confirmPass: z.string().min(1, 'Confirm password is required'),
     role: z.string(),
     username: z.string().min(1, 'Username is required'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
     data: z.object({
       dob: z
         .string()
         .min(1, 'Date of birth is required')
         .refine((val) => dateRegex.test(val), {
-          message: 'Invalid date format, must be DD-MM-YYYY',
+          message: 'Invalid date format, must be YYYY-MM-DD',
         }),
-      email: z.string().min(1, 'Email is required').email('Invalid email format'),
       gender: z.enum(Object.values(Gender) as [Gender, ...Gender[]]),
     }),
   })
@@ -43,10 +43,6 @@ const genderOptions = [
   {
     id: '2',
     value: Gender.MALE,
-  },
-  {
-    id: '3',
-    value: Gender.OTHER,
   },
 ];
 
@@ -68,24 +64,21 @@ export default function SignUp() {
       password: '',
       role: 'player',
       username: '',
+      email: '',
       data: {
         dob: '',
-        email: '',
         gender: Gender.FEMALE,
       },
     },
     resolver: zodResolver(signUpFormSchema),
   });
 
-  const onSubmit = (data: SignUpFormData) => {
-    console.log({ ...data, data: { ...data.data, dob: new Date(data.data.dob) } });
-    let { phone } = data;
-    if (phone.startsWith('+84 0')) {
-      phone = '+84 ' + phone.slice(5); // Remove the '0' after '+84 '
-    }
-    phone = phone.replace(/\s+/g, ''); // Remove all spaces
-    console.log(JSON.stringify({ ...data, phone }));
-    router.push(`verify-otp?phone=${encodeURIComponent(phone)}`);
+  const onSubmit = (user: SignUpFormData) => {
+    const { confirmPass, data, phone: rawPhone, ...rest } = user;
+    const phone = formatPhoneNumberSubmit(rawPhone);
+    const formattedData = { ...data, dob: new Date(data.dob) };
+
+    router.push({ pathname: '/verify-otp', params: { data: JSON.stringify({ ...rest, phone, data: formattedData }) } });
   };
 
   return (
@@ -172,7 +165,7 @@ export default function SignUp() {
                   <>
                     <Input
                       aria-labelledby='dob'
-                      placeholder='DD-MM-YYYY'
+                      placeholder='YYYY-MM-DD'
                       onBlur={onBlur}
                       onChangeText={(text) => onChange(formatDOB(text))}
                       value={value}
@@ -205,7 +198,7 @@ export default function SignUp() {
                     {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}
                   </>
                 )}
-                name='data.email'
+                name='email'
               />
             </View>
             <View>
@@ -262,7 +255,7 @@ export default function SignUp() {
           </Button>
           <View className='flex flex-row items-center justify-center'>
             <Text className='text-center text-foreground'>Already have an account? </Text>
-            <Button variant='link' size='sm' onPress={() => router.replace('sign-in')}>
+            <Button variant='link' size='sm' onPress={() => router.replace('/sign-in')}>
               <Text className='text-primary underline'>Sign in</Text>
             </Button>
           </View>

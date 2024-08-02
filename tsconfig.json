@@ -2,7 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": ["babel__generator"],
+    "types": ["babel__generator", "node"],
     "typeRoots": ["node_modules/@types"],
     "paths": {
       "~/*": ["./*"]

@@ -15,3 +15,10 @@ export const formatPhoneNumber = (text: string) => {
 };
 
 export const phoneRegex = /^\+84\s\d{9,10}$/; // Adjust the regex pattern according to your phone number format
+
+export const formatPhoneNumberSubmit = (phone: string): string => {
+  if (phone.startsWith('+84 0')) {
+    phone = '+84 ' + phone.slice(5); // Remove the '0' after '+84 '
+  }
+  return phone.replace(/\s+/g, ''); // Remove all spaces
+};

@@ -1,6 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import axios from 'axios';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -18,6 +19,8 @@ import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
 const verifyOTPFormSchema = z.object({
   otp: z.string().min(1, 'OTP is required'),
 });
@@ -25,7 +28,7 @@ type VerifyOTPFormData = z.infer<typeof verifyOTPFormSchema>;
 
 type RouteParams = {
   VerifyOTP: {
-    phone: string;
+    data: string;
   };
 };
 
@@ -37,7 +40,8 @@ export default function VerifyOTP() {
   });
 
   const route = useRoute<RouteProp<RouteParams, 'VerifyOTP'>>();
-  const { phone } = route.params;
+  const { data } = route.params;
+  const { phone } = JSON.parse(data);
 
   const inputRefs = useRef<TextInput[]>([]);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -55,7 +59,6 @@ export default function VerifyOTP() {
   }, []);
 
   const onSubmit = (data: VerifyOTPFormData) => {
-    console.log(data);
     confirmOTP(data.otp);
   };
 
@@ -90,24 +93,6 @@ export default function VerifyOTP() {
     }
   };
 
-  // Handle login
-  async function onAuthStateChanged(user: any) {
-    if (user) {
-      // Some Android devices can automatically process the verification code (OTP) message, and the user would NOT need to enter the code.
-      // Actually, if he/she tries to enter it, he/she will get an error message because the code was already used in the background.
-      // In this function, make sure you hide the component(s) for entering the code and/or navigate away from this screen.
-      // It is also recommended to display a message to the user informing him/her that he/she has successfully logged in.
-
-      await AsyncStorage.setItem('isAuthenticated', 'true');
-      router.replace('(tabs)');
-    }
-  }
-
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
-
   const signUpWithPhoneNumber = async (phoneNumber: string) => {
     try {
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
@@ -117,20 +102,29 @@ export default function VerifyOTP() {
     }
   };
 
+  const signUpUser = async (data: string) => {
+    await axios.post(`${apiUrl}/auth/sign-up`, JSON.parse(data));
+  };
+
   const confirmOTP = async (otp: string) => {
     try {
       const userCredential = await confirm?.confirm(otp);
-      // const user = userCredential?.user;
+      const user = userCredential?.user;
 
-      // const userDocument = await firestore().collection('users').doc(user?.uid).get();
-      // if (!userDocument.exists) {
-      //   await firestore().collection('users').doc(user?.uid).set({
-      //     phoneNumber: user?.phoneNumber,
-      //   });
-      // }
+      const userDocument = await firestore().collection('users').doc(user?.uid).get();
+      if (!userDocument.exists) {
+        await firestore().collection('users').doc(user?.uid).set({
+          phoneNumber: user?.phoneNumber,
+        });
+      }
 
-      // await AsyncStorage.setItem('isAuthenticated', 'true');
-      // router.replace('(tabs)');
+      if (user) {
+        console.log(user.uid);
+
+        await signUpUser(data);
+
+        router.replace({ pathname: '/sign-in', params: { uuid: user.uid } });
+      }
     } catch (error) {
       console.error('Error confirming OTP: ', error);
     }

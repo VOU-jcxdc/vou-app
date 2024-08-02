@@ -1,4 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import axios from 'axios';
 import { router } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -8,7 +10,10 @@ import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Text } from '~/components/ui/text';
-import { formatPhoneNumber, phoneRegex } from '~/utils/PhoneUtils';
+import { useAuth } from '~/context/AuthContext';
+import { formatPhoneNumber, formatPhoneNumberSubmit, phoneRegex } from '~/utils/PhoneUtils';
+
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 const signInFormSchema = z.object({
   phone: z.string().min(1, 'Phone number is required').regex(phoneRegex, 'Invalid phone format'),
@@ -16,7 +21,30 @@ const signInFormSchema = z.object({
 });
 type SignInFormData = z.infer<typeof signInFormSchema>;
 
+type RouteParams = {
+  SignIn: {
+    uuid: string;
+  };
+};
+
+const handleSignInResponse = (
+  response: any,
+  uuid: string,
+  setAuthInfo: (token: string, clientId: string, role: string) => void,
+  router: any
+) => {
+  if (response.data.statusCode === 200) {
+    const { access_token } = response.data;
+    setAuthInfo(access_token, uuid, 'player');
+    router.replace('/(tabs)');
+  }
+};
+
 export default function SignIn() {
+  const { setAuthInfo } = useAuth();
+  const route = useRoute<RouteProp<RouteParams, 'SignIn'>>();
+  const { uuid } = route.params;
+
   const { control, handleSubmit } = useForm<SignInFormData>({
     defaultValues: {
       phone: '+84 ',
@@ -25,14 +53,22 @@ export default function SignIn() {
     resolver: zodResolver(signInFormSchema),
   });
 
-  const onSubmit = (data: SignInFormData) => {
+  const signInUser = async (data: SignInFormData) => {
+    const response = await axios.post(`${apiUrl}/auth/sign-in`, data);
+    return response;
+  };
+
+  const onSubmit = async (data: SignInFormData) => {
     let { phone } = data;
-    if (phone.startsWith('+84 0')) {
-      phone = '+84 ' + phone.slice(5); // Remove the '0' after '+84 '
-    }
-    phone = phone.replace(/\s+/g, ''); // Remove all spaces
+    phone = formatPhoneNumberSubmit(phone);
     console.log(JSON.stringify({ ...data, phone }));
-    router.replace('(tabs)');
+
+    try {
+      const response = await signInUser({ ...data, phone });
+      handleSignInResponse(response, uuid, setAuthInfo, router);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+    }
   };
 
   return (
@@ -95,7 +131,7 @@ export default function SignIn() {
           </Button>
           <View className='flex flex-row items-center justify-center'>
             <Text className='text-center text-foreground'>Don't have an account?</Text>
-            <Button variant='link' size='sm' onPress={() => router.replace('sign-up')}>
+            <Button variant='link' size='sm' onPress={() => router.replace('/sign-up')}>
               <Text className='text-primary underline'>Sign up</Text>
             </Button>
           </View>
