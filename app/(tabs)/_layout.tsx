@@ -5,14 +5,14 @@ import { TabBarIcon } from '~/components/navigation/TabBarIcon';
 import { Colors } from '~/constants/Colors';
 
 export default function TabLayout() {
-return (
+  return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors['light'].tint,
         headerShown: false,
       }}>
       <Tabs.Screen
-        name='index'
+        name='(events)'
         options={{
           title: 'Events',
           tabBarIcon: ({ color, focused }) => (
@@ -21,25 +21,21 @@ return (
         }}
       />
       <Tabs.Screen
-        name='favorite-events'
+        name='(favorite-events)'
         options={{
           title: 'Favorite Events',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'heart' : 'heart-outline'} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? 'heart' : 'heart-outline'} color={color} />,
         }}
       />
       <Tabs.Screen
-        name='vouchers'
+        name='(vouchers)'
         options={{
           title: 'Vouchers',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'ticket' : 'ticket-outline'} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? 'ticket' : 'ticket-outline'} color={color} />,
         }}
       />
       <Tabs.Screen
-        name='profile'
+        name='(profile)'
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (

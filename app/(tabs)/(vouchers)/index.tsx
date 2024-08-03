@@ -1,11 +1,9 @@
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 export default function Vouchers() {
   return (
     <View className='h-full justify-center items-center'>
-      <Text>
-        Vouchers
-      </Text>
+      <Text>Vouchers</Text>
     </View>
   );
 }
