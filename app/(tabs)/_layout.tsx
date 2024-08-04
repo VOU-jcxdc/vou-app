@@ -1,18 +1,25 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
 import { TabBarIcon } from '~/components/navigation/TabBarIcon';
 import { Colors } from '~/constants/Colors';
+import { useAuth } from '~/context/AuthContext';
 
 export default function TabLayout() {
-return (
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Redirect href='/sign-in' />;
+  }
+
+  return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors['light'].tint,
         headerShown: false,
       }}>
       <Tabs.Screen
-        name='index'
+        name='(events)'
         options={{
           title: 'Events',
           tabBarIcon: ({ color, focused }) => (
@@ -21,25 +28,21 @@ return (
         }}
       />
       <Tabs.Screen
-        name='favorite-events'
+        name='(favorite-events)'
         options={{
           title: 'Favorite Events',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'heart' : 'heart-outline'} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? 'heart' : 'heart-outline'} color={color} />,
         }}
       />
       <Tabs.Screen
-        name='vouchers'
+        name='(vouchers)'
         options={{
           title: 'Vouchers',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'ticket' : 'ticket-outline'} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? 'ticket' : 'ticket-outline'} color={color} />,
         }}
       />
       <Tabs.Screen
-        name='profile'
+        name='(profile)'
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
