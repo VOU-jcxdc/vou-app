@@ -6,7 +6,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Platform } from 'react-native';
-import { AuthProvider, useAuth } from '~/context/AuthContext';
+import { AuthProvider } from '~/context/AuthContext';
 import '~/global.css';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
@@ -62,12 +62,9 @@ export default function RootLayout() {
 }
 
 const AuthStack = () => {
-  const { isAuthenticated } = useAuth();
-
-  // console.log(isAuthenticated);
-
   return (
-    <Stack initialRouteName={isAuthenticated ? '(tabs)' : '(auth)'}>
+    <Stack>
+      <Stack.Screen redirect name='index' />
       <Stack.Screen name='(auth)' options={{ headerShown: false }} />
       <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
       <Stack.Screen name='+not-found' />

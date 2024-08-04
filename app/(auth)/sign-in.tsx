@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
 import axios from 'axios';
 import { router } from 'expo-router';
 import React from 'react';
@@ -27,23 +27,47 @@ type RouteParams = {
   };
 };
 
+type SignInResponse = {
+  data: {
+    statusCode: number;
+    data: {
+      access_token: string;
+    };
+  };
+};
+
+const getUserByPhoneNumber = async (phoneNumber: string): Promise<string | null> => {
+  try {
+    const userQuerySnapshot = await firestore().collection('users').where('phoneNumber', '==', phoneNumber).get();
+
+    if (!userQuerySnapshot.empty) {
+      const userDocument = userQuerySnapshot.docs[0];
+      const userUUID = userDocument.id;
+      return userUUID;
+    } else {
+      console.log('User not found');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting user by phone number: ', error);
+    return null;
+  }
+};
+
 const handleSignInResponse = (
-  response: any,
-  uuid: string,
+  response: SignInResponse,
   setAuthInfo: (token: string, clientId: string, role: string) => void,
-  router: any
+  uuid: string | null
 ) => {
   if (response.data.statusCode === 200) {
-    const { access_token } = response.data;
-    setAuthInfo(access_token, uuid, 'player');
+    const { access_token } = response.data.data;
+    setAuthInfo(access_token, uuid ? uuid : '', 'player');
     router.replace('/(tabs)');
   }
 };
 
 export default function SignIn() {
   const { setAuthInfo } = useAuth();
-  const route = useRoute<RouteProp<RouteParams, 'SignIn'>>();
-  const { uuid } = route.params;
 
   const { control, handleSubmit } = useForm<SignInFormData>({
     defaultValues: {
@@ -61,11 +85,11 @@ export default function SignIn() {
   const onSubmit = async (data: SignInFormData) => {
     let { phone } = data;
     phone = formatPhoneNumberSubmit(phone);
-    console.log(JSON.stringify({ ...data, phone }));
 
     try {
       const response = await signInUser({ ...data, phone });
-      handleSignInResponse(response, uuid, setAuthInfo, router);
+      const uuid = await getUserByPhoneNumber(phone);
+      handleSignInResponse(response, setAuthInfo, uuid);
     } catch (error) {
       console.error('Error during sign-in:', error);
     }

@@ -119,11 +119,8 @@ export default function VerifyOTP() {
       }
 
       if (user) {
-        console.log(user.uid);
-
         await signUpUser(data);
-
-        router.replace({ pathname: '/sign-in', params: { uuid: user.uid } });
+        router.replace('/sign-in');
       }
     } catch (error) {
       console.error('Error confirming OTP: ', error);

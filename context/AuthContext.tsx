@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [uuid, setUuid] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -28,7 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const storedToken = await AsyncStorage.getItem('token');
         const storedUuid = await AsyncStorage.getItem('uuid');
         const storedRole = await AsyncStorage.getItem('role');
-        console.log('Auth Info from AsyncStorage:', { storedToken, storedUuid, storedRole });
 
         if (storedToken && storedUuid && storedRole) {
           setToken(storedToken);
@@ -41,6 +41,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         console.error('Error retrieving auth info:', error);
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false); // Set loading to false once done
       }
     };
 
@@ -65,7 +67,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     AsyncStorage.removeItem('token');
     AsyncStorage.removeItem('uuid');
     AsyncStorage.removeItem('role');
+
+    console.log('Auth Info Cleared');
   };
+
+  if (isLoading) {
+    return null; // Return null while
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo }}>

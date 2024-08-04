@@ -4,6 +4,7 @@ import { SafeAreaView, Text, View } from 'react-native';
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
 import { Button } from '~/components/ui/button';
+import { useAuth } from '~/context/AuthContext';
 
 const user = {
   userName: 'minen1712',
@@ -14,8 +15,10 @@ const user = {
 };
 
 export default function Profile() {
+  const { clearAuthInfo } = useAuth();
+
   const handleSignOut = () => {
-    alert('Sign out');
+    clearAuthInfo();
   };
 
   return (
