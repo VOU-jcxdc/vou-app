@@ -29,10 +29,10 @@ const user = {
 };
 
 const ProfileFormSchema = z.object({
-  userName: z.string(),
-  fullName: z.string(),
-  phone: z.string(),
-  email: z.string().email(),
+  userName: z.string().min(1, 'Username is required.'),
+  fullName: z.string().min(1, 'Full name is required.'),
+  phone: z.string().min(10, 'Phone number is invalid.').max(11, 'Phone number is invalid.'),
+  email: z.string().email('Please enter a valid email.'),
 });
 
 type ProfileForm = z.infer<typeof ProfileFormSchema>;
@@ -152,7 +152,9 @@ export default function EditProfile() {
                 name='userName'
                 rules={{ required: true }}
               />
-              {errors.userName && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
+              {errors.userName && (
+                <Text className='text-sm font-medium text-destructive'>{errors.userName.message}</Text>
+              )}
 
               <Controller
                 control={control}
@@ -162,7 +164,9 @@ export default function EditProfile() {
                 name='fullName'
                 rules={{ required: true }}
               />
-              {errors.fullName && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
+              {errors.fullName && (
+                <Text className='text-sm font-medium text-destructive'>{errors.fullName.message}</Text>
+              )}
 
               <Controller
                 control={control}
@@ -178,7 +182,7 @@ export default function EditProfile() {
                 name='phone'
                 rules={{ required: true }}
               />
-              {errors.phone && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
+              {errors.phone && <Text className='text-sm font-medium text-destructive'>{errors.phone.message}</Text>}
 
               <Controller
                 control={control}
@@ -188,7 +192,7 @@ export default function EditProfile() {
                 name='email'
                 rules={{ required: true }}
               />
-              {errors.email && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
+              {errors.email && <Text className='text-sm font-medium text-destructive'>{errors.email.message}</Text>}
             </View>
           </TouchableWithoutFeedback>
         </View>
