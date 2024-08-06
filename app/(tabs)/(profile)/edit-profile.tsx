@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as React from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -12,6 +12,8 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
@@ -26,12 +28,14 @@ const user = {
   image: 'https://picsum.photos/id/1/200/300',
 };
 
-type ProfileForm = {
-  userName: string;
-  fullName: string;
-  phone: string;
-  email: string;
-};
+const ProfileFormSchema = z.object({
+  userName: z.string(),
+  fullName: z.string(),
+  phone: z.string(),
+  email: z.string().email(),
+});
+
+type ProfileForm = z.infer<typeof ProfileFormSchema>;
 
 function checkChanges(user: ProfileForm, data: ProfileForm) {
   return (
@@ -48,14 +52,15 @@ export default function EditProfile() {
   const {
     handleSubmit,
     control,
-    formState: { errors },
-  } = useForm({
+    formState: { errors, isSubmitting },
+  } = useForm<ProfileForm>({
     defaultValues: {
       userName: user?.userName,
       fullName: user?.fullName,
       phone: user?.phone,
       email: user?.email,
     },
+    resolver: zodResolver(ProfileFormSchema),
   });
 
   const uploadCameraImage = async () => {
@@ -112,7 +117,7 @@ export default function EditProfile() {
     }
   };
 
-  const onSubmit = (data: ProfileForm) => {
+  const onSubmit: SubmitHandler<ProfileForm> = (data) => {
     if (checkChanges(user, data) || image) {
       const updatedUser = {
         ...data,
@@ -171,7 +176,7 @@ export default function EditProfile() {
                   />
                 )}
                 name='phone'
-                rules={{ required: true, pattern: /^[0-9]{10}$/ }}
+                rules={{ required: true }}
               />
               {errors.phone && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
 
@@ -181,7 +186,7 @@ export default function EditProfile() {
                   <ProfileInput label='Email' value={value} onBlur={onBlur} onChangeText={onChange} />
                 )}
                 name='email'
-                rules={{ required: true, pattern: /^\S+@\S+$/i }}
+                rules={{ required: true }}
               />
               {errors.email && <Text className='text-sm font-medium text-destructive'>This is required.</Text>}
             </View>
@@ -189,7 +194,7 @@ export default function EditProfile() {
         </View>
 
         <View className='w-full px-10'>
-          <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)}>
+          <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
             <Text className='font-bold text-primary-foreground'>Save</Text>
           </Button>
         </View>
