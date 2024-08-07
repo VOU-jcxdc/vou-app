@@ -17,7 +17,7 @@ export const formatDOB = (text: string) => {
   return formatted;
 };
 
-export const isCurrentEvent = (beginDate: Date, endDate: Date) => {
+export const isDateAvailable = (beginDate: Date, endDate: Date) => {
   const today = new Date();
   return today >= beginDate && today <= endDate;
 };
