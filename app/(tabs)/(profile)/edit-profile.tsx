@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as React from 'react';
@@ -8,27 +9,27 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   SafeAreaView,
+  ScrollView,
   Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { z } from 'zod';
+import { ErrorMessage } from '~/components/ErrorMessage';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
 import { Button } from '~/components/ui/button';
 import UploadModal from '~/components/UploadModal';
-
-const user = {
-  userName: 'minen1712',
-  phone: '0123456789',
-  email: 'tranminhanh1912@gmail.com',
-  image: 'https://picsum.photos/id/1/200/300',
-};
+import { useRefreshByUser } from '~/hooks/useRefreshByUser';
+import { fetchUser } from '~/lib/api/api';
+import { User } from '~/lib/interfaces/user';
 
 const ProfileFormSchema = z.object({
-  userName: z.string().min(1, 'Username is required.'),
+  username: z.string().min(1, 'Username is required.'),
   phone: z.string().min(10, 'Phone number is invalid.').max(11, 'Phone number is invalid.'),
   email: z.string().email('Please enter a valid email.'),
 });
@@ -36,24 +37,33 @@ const ProfileFormSchema = z.object({
 type ProfileForm = z.infer<typeof ProfileFormSchema>;
 
 function checkChanges(user: ProfileForm, data: ProfileForm) {
-  return user.userName !== data.userName || user.phone !== data.phone || user.email !== data.email;
+  return user.username !== data.username || user.phone !== data.phone || user.email !== data.email;
 }
 
 export default function EditProfile() {
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
   const [image, setImage] = React.useState<string | null>(null);
+  const { isPending, error, data, refetch } = useQuery<Pick<User, 'bucketId' | 'email' | 'phone' | 'username'>, Error>({
+    queryKey: ['user'],
+    queryFn: fetchUser,
+  });
+  const { isRefetchingByUser, refetchByUser } = useRefreshByUser(refetch);
   const {
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({
     defaultValues: {
-      userName: user?.userName,
-      phone: user?.phone,
-      email: user?.email,
+      username: data?.username,
+      phone: data?.phone,
+      email: data?.email,
     },
     resolver: zodResolver(ProfileFormSchema),
   });
+
+  if (isPending) return <LoadingIndicator />;
+  if (error) return <ErrorMessage message={error.message}></ErrorMessage>;
+  if (!data) return null;
 
   const uploadCameraImage = async () => {
     try {
@@ -109,10 +119,10 @@ export default function EditProfile() {
     }
   };
 
-  const onSubmit: SubmitHandler<ProfileForm> = (data) => {
-    if (checkChanges(user, data) || image) {
-      alert(JSON.stringify(data));
-      if (image !== user.image) {
+  const onSubmit: SubmitHandler<ProfileForm> = (formData) => {
+    if (checkChanges(data, formData) || image) {
+      alert(JSON.stringify(formData));
+      if (image !== data.bucketId) {
         fetch('https://146.190.100.11:3000/files/presigned-url', {
           method: 'POST',
           headers: {
@@ -167,71 +177,79 @@ export default function EditProfile() {
 
   return (
     <KeyboardAvoidingView className='flex-1' behavior={Platform.OS === 'ios' ? 'position' : 'height'}>
-      <SafeAreaView className='h-full items-center justify-around'>
-        <View className='w-full gap-6'>
-          <View className='w-full'>
-            <Pressable className='items-center gap-6' onPress={() => setModalVisible(true)}>
-              <ProfileAvatar uri={image || user?.image} alt={user?.userName} />
-              <Text className='text-foreground'>Edit Profile Picture</Text>
-            </Pressable>
+      <SafeAreaView className='h-full'>
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />}
+          className='w-full'
+          contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View className='w-full gap-6 justify-around items-center'>
+            <View className='w-full'>
+              <Pressable className='items-center gap-6' onPress={() => setModalVisible(true)}>
+                <ProfileAvatar
+                  uri={image || data?.bucketId || 'https://picsum.photos/id/1/200/300'}
+                  alt={data?.username}
+                />
+                <Text className='text-foreground'>Edit Profile Picture</Text>
+              </Pressable>
+            </View>
+
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+              <View className='w-full gap-6 px-10'>
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <ProfileInput label='Username' value={value} onBlur={onBlur} onChangeText={onChange} />
+                  )}
+                  name='username'
+                  rules={{ required: true }}
+                />
+                {errors.username && (
+                  <Text className='text-sm font-medium text-destructive'>{errors.username.message}</Text>
+                )}
+
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <ProfileInput
+                      label='Phone'
+                      value={value}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      keyboardType='phone-pad'
+                    />
+                  )}
+                  name='phone'
+                  rules={{ required: true }}
+                />
+                {errors.phone && <Text className='text-sm font-medium text-destructive'>{errors.phone.message}</Text>}
+
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <ProfileInput label='Email' value={value} onBlur={onBlur} onChangeText={onChange} />
+                  )}
+                  name='email'
+                  rules={{ required: true }}
+                />
+                {errors.email && <Text className='text-sm font-medium text-destructive'>{errors.email.message}</Text>}
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-            <View className='w-full gap-6 px-10'>
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput label='Username' value={value} onBlur={onBlur} onChangeText={onChange} />
-                )}
-                name='userName'
-                rules={{ required: true }}
-              />
-              {errors.userName && (
-                <Text className='text-sm font-medium text-destructive'>{errors.userName.message}</Text>
-              )}
+          <View className='w-full px-10'>
+            <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
+              <Text className='font-bold text-primary-foreground'>Save</Text>
+            </Button>
+          </View>
 
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput
-                    label='Phone'
-                    value={value}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    keyboardType='phone-pad'
-                  />
-                )}
-                name='phone'
-                rules={{ required: true }}
-              />
-              {errors.phone && <Text className='text-sm font-medium text-destructive'>{errors.phone.message}</Text>}
-
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput label='Email' value={value} onBlur={onBlur} onChangeText={onChange} />
-                )}
-                name='email'
-                rules={{ required: true }}
-              />
-              {errors.email && <Text className='text-sm font-medium text-destructive'>{errors.email.message}</Text>}
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-        <View className='w-full px-10'>
-          <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
-            <Text className='font-bold text-primary-foreground'>Save</Text>
-          </Button>
-        </View>
-
-        <UploadModal
-          modalVisible={modalVisible}
-          onBackPress={() => setModalVisible(false)}
-          onCameraPress={uploadCameraImage}
-          onGalleryPress={uploadGalleryImage}
-          onRemovePress={removeImage}
-        />
+          <UploadModal
+            modalVisible={modalVisible}
+            onBackPress={() => setModalVisible(false)}
+            onCameraPress={uploadCameraImage}
+            onGalleryPress={uploadGalleryImage}
+            onRemovePress={removeImage}
+          />
+        </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );

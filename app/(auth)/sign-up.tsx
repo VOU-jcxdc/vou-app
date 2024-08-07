@@ -10,9 +10,9 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { Text } from '~/components/ui/text';
-import { Gender } from '~/lib/types/enum';
 import { dateRegex, formatDOB } from '~/utils/DateTimeUtils';
 import { formatPhoneNumber, formatPhoneNumberSubmit } from '~/utils/PhoneUtils';
+import { Gender } from '~/utils/enum';
 
 const signUpFormSchema = z
   .object({
@@ -34,18 +34,6 @@ const signUpFormSchema = z
   })
   .refine((data) => data.password === data.confirmPass, { message: 'Passwords do not match', path: ['confirmPass'] });
 type SignUpFormData = z.infer<typeof signUpFormSchema>;
-
-// Define the radio button options
-const genderOptions = [
-  {
-    id: '1', // unique id for each option
-    value: Gender.FEMALE,
-  },
-  {
-    id: '2',
-    value: Gender.MALE,
-  },
-];
 
 function RadioGroupItemWithLabel({ value, onLabelPress }: { value: string; onLabelPress: () => void }) {
   return (
@@ -234,12 +222,8 @@ export default function SignUp() {
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <>
                     <RadioGroup value={value} onValueChange={onChange} className='flex flex-row gap-3'>
-                      {genderOptions.map((option) => (
-                        <RadioGroupItemWithLabel
-                          key={option.id}
-                          value={option.value}
-                          onLabelPress={() => onChange(option.value)}
-                        />
+                      {Object.values(Gender).map((gender: Gender, id) => (
+                        <RadioGroupItemWithLabel key={id} value={gender} onLabelPress={() => onChange(gender)} />
                       ))}
                     </RadioGroup>
                     {error && <Text className='text-sm font-medium text-destructive'>{error.message}</Text>}

@@ -1,7 +1,6 @@
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import axios from 'axios';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -19,6 +18,7 @@ import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
+import { doPost } from '~/utils/APIRequest';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -104,7 +104,7 @@ export default function VerifyOTP() {
   };
 
   const signUpUser = async (data: string) => {
-    await axios.post(`${apiUrl}/auth/sign-up`, JSON.parse(data));
+    await doPost(`${apiUrl}/auth/sign-up`, JSON.parse(data));
   };
 
   const confirmOTP = async (otp: string) => {
