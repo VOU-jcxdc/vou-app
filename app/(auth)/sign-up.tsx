@@ -10,7 +10,6 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { Text } from '~/components/ui/text';
-
 import { Gender } from '~/lib/types/enum';
 import { dateRegex, formatDOB } from '~/utils/DateTimeUtils';
 import { formatPhoneNumber, formatPhoneNumberSubmit } from '~/utils/PhoneUtils';

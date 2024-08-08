@@ -7,7 +7,7 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Skeleton } from '~/components/ui/skeleton';
-import { isDateAvailable } from '~/utils/DateTimeUtils';
+import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const fetchFavoriteEventById = async (id: string | string[] | undefined) => {
   const res = await fetch(`https://66a253fa967c89168f1fa708.mockapi.io/events/${id}`);
@@ -34,9 +34,7 @@ export default function FavoriteEventDetails() {
     );
   }
 
-  const beginDate = new Date(data?.begin_date).toLocaleDateString();
-  const endDate = new Date(data?.end_date).toLocaleDateString();
-  const isCurrent = isDateAvailable(data?.begin_date, data?.end_date);
+  const { beginDate, endDate, isCurrent } = getEventDateInfo(data?.begin_date, data?.end_date);
 
   const handleShare = () => {
     alert('Share event');

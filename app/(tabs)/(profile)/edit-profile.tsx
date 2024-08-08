@@ -1,5 +1,5 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
 import * as React from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
@@ -22,7 +21,6 @@ import UploadModal from '~/components/UploadModal';
 
 const user = {
   userName: 'minen1712',
-  fullName: 'Trần Minh Anh',
   phone: '0123456789',
   email: 'tranminhanh1912@gmail.com',
   image: 'https://picsum.photos/id/1/200/300',
@@ -30,7 +28,6 @@ const user = {
 
 const ProfileFormSchema = z.object({
   userName: z.string().min(1, 'Username is required.'),
-  fullName: z.string().min(1, 'Full name is required.'),
   phone: z.string().min(10, 'Phone number is invalid.').max(11, 'Phone number is invalid.'),
   email: z.string().email('Please enter a valid email.'),
 });
@@ -38,12 +35,7 @@ const ProfileFormSchema = z.object({
 type ProfileForm = z.infer<typeof ProfileFormSchema>;
 
 function checkChanges(user: ProfileForm, data: ProfileForm) {
-  return (
-    user.userName !== data.userName ||
-    user.fullName !== data.fullName ||
-    user.phone !== data.phone ||
-    user.email !== data.email
-  );
+  return user.userName !== data.userName || user.phone !== data.phone || user.email !== data.email;
 }
 
 export default function EditProfile() {
@@ -56,7 +48,6 @@ export default function EditProfile() {
   } = useForm<ProfileForm>({
     defaultValues: {
       userName: user?.userName,
-      fullName: user?.fullName,
       phone: user?.phone,
       email: user?.email,
     },
@@ -128,7 +119,7 @@ export default function EditProfile() {
 
     //Mutation
 
-    router.navigate('(profile)');
+    // router.navigate('(profile)');
   };
 
   return (
@@ -154,18 +145,6 @@ export default function EditProfile() {
               />
               {errors.userName && (
                 <Text className='text-sm font-medium text-destructive'>{errors.userName.message}</Text>
-              )}
-
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <ProfileInput label='Full Name' value={value} onBlur={onBlur} onChangeText={onChange} />
-                )}
-                name='fullName'
-                rules={{ required: true }}
-              />
-              {errors.fullName && (
-                <Text className='text-sm font-medium text-destructive'>{errors.fullName.message}</Text>
               )}
 
               <Controller

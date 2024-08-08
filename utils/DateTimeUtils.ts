@@ -17,9 +17,16 @@ export const formatDOB = (text: string) => {
   return formatted;
 };
 
-export const isDateAvailable = (beginDate: Date, endDate: Date) => {
+export const isDateAvailable = (begin: Date, end: Date) => {
   const today = new Date();
-  return today >= beginDate && today <= endDate;
+  return today >= begin && today <= end;
+};
+
+export const getEventDateInfo = (begin: Date, end: Date) => {
+  const beginDate = new Date(begin).toLocaleDateString();
+  const endDate = new Date(end).toLocaleDateString();
+  const isCurrent = isDateAvailable(begin, end);
+  return { beginDate, endDate, isCurrent };
 };
 
 export const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
