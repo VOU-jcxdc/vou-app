@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import * as React from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
@@ -110,16 +111,58 @@ export default function EditProfile() {
 
   const onSubmit: SubmitHandler<ProfileForm> = (data) => {
     if (checkChanges(user, data) || image) {
-      const updatedUser = {
-        ...data,
-        image: image || user?.image,
-      };
-      alert(JSON.stringify(updatedUser));
+      alert(JSON.stringify(data));
+      if (image !== user.image) {
+        fetch('https://146.190.100.11:3000/files/presigned-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            file: image,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            fetch(data.url, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'image/jpeg',
+              },
+              body: image,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                fetch('https://146.190.100.11:3000/files/upload-confirmation', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    file: data.key,
+                  }),
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    console.log('Success:', data);
+                  })
+                  .catch((error) => {
+                    console.error('Error:', error);
+                  });
+              })
+              .catch((error) => {
+                console.error('Error:', error);
+              });
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+      }
     }
 
     //Mutation
 
-    // router.navigate('(profile)');
+    router.navigate('/(profile)');
   };
 
   return (

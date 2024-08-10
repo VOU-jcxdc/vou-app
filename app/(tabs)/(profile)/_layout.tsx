@@ -9,7 +9,7 @@ export default function ProfileLayout() {
         options={{
           title: 'Profile',
           headerRight: () => (
-            <Link href='/(profile)/edit-profile' asChild>
+            <Link href='/edit-profile' asChild>
               <Ionicons name='create-outline' size={24} />
             </Link>
           ),
@@ -20,7 +20,7 @@ export default function ProfileLayout() {
         options={{
           title: 'Edit Profile',
           headerLeft: () => (
-            <Link href='/(profile)/' asChild>
+            <Link href='/(profile)' asChild>
               <Ionicons name='arrow-back' size={24} />
             </Link>
           ),

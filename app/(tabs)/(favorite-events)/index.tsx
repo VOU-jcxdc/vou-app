@@ -39,7 +39,6 @@ export default function FavoriteEvents() {
               begin_date={item.begin_date}
               end_date={item.end_date}
               image={item.image}
-              page='favorite-events'
             />
           )}
           ItemSeparatorComponent={() => <View className='h-4' />}

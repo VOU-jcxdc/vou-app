@@ -12,7 +12,6 @@ type EventCardProps = {
   end_date: string;
   image: string;
   horizontal?: boolean;
-  page?: string;
 };
 
 export default function EventCard({
@@ -23,7 +22,6 @@ export default function EventCard({
   end_date,
   image,
   horizontal = false,
-  page = 'events',
 }: EventCardProps) {
   const beginDate = new Date(begin_date).toLocaleDateString();
   const endDate = new Date(end_date).toLocaleDateString();
@@ -34,7 +32,7 @@ export default function EventCard({
         className='h-full'
         onPress={() =>
           router.push({
-            pathname: `/(${page})/[id]`,
+            pathname: `/[id]`,
             params: { id },
           })
         }>

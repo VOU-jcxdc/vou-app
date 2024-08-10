@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Platform } from 'react-native';
 
+import { AuthProvider } from '~/context/AuthContext';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 
@@ -51,14 +52,14 @@ export default function RootLayout() {
   }
 
   return (
-    // <AuthProvider>
-    <ThemeProvider value={LIGHT_THEME}>
-      <QueryClientProvider client={queryClient}>
-        <StatusBar style={'dark'} />
-        <AuthStack />
-      </QueryClientProvider>
-    </ThemeProvider>
-    // </AuthProvider>
+    <AuthProvider>
+      <ThemeProvider value={LIGHT_THEME}>
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style={'dark'} />
+          <AuthStack />
+        </QueryClientProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
@@ -66,7 +67,7 @@ const AuthStack = () => {
   return (
     <Stack>
       <Stack.Screen redirect name='index' />
-      {/* <Stack.Screen name='(auth)' options={{ headerShown: false }} /> */}
+      <Stack.Screen name='(auth)' options={{ headerShown: false }} />
       <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
       <Stack.Screen name='+not-found' />
     </Stack>
