@@ -1,13 +1,15 @@
+import 'expo-dev-client';
+import '~/global.css';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme, ThemeProvider } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import 'expo-dev-client';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Platform } from 'react-native';
+
 import { AuthProvider } from '~/context/AuthContext';
-import '~/global.css';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 

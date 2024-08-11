@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-export default function EventsLayout() {
+export default function VouchersLayout() {
   return (
     <Stack>
       <Stack.Screen

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, Stack } from 'expo-router';
 
-export default function EventsLayout() {
+export default function ProfileLayout() {
   return (
     <Stack>
       <Stack.Screen
@@ -9,7 +9,7 @@ export default function EventsLayout() {
         options={{
           title: 'Profile',
           headerRight: () => (
-            <Link href='/(profile)/edit-profile' asChild>
+            <Link href='/edit-profile' asChild>
               <Ionicons name='create-outline' size={24} />
             </Link>
           ),
@@ -20,7 +20,7 @@ export default function EventsLayout() {
         options={{
           title: 'Edit Profile',
           headerLeft: () => (
-            <Link href='/(profile)/' asChild>
+            <Link href='/(profile)' asChild>
               <Ionicons name='arrow-back' size={24} />
             </Link>
           ),
