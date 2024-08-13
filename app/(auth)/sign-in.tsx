@@ -1,20 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import firestore from '@react-native-firebase/firestore';
-import axios from 'axios';
 import { router } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Keyboard, SafeAreaView, TouchableWithoutFeedback, View } from 'react-native';
 import { z } from 'zod';
-
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Text } from '~/components/ui/text';
 import { useAuth } from '~/context/AuthContext';
+import { doPost } from '~/utils/APIRequest';
 import { formatPhoneNumber, formatPhoneNumberSubmit, phoneRegex } from '~/utils/PhoneUtils';
-
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 const signInFormSchema = z.object({
   phone: z.string().min(1, 'Phone number is required').regex(phoneRegex, 'Invalid phone format'),
@@ -22,18 +20,10 @@ const signInFormSchema = z.object({
 });
 type SignInFormData = z.infer<typeof signInFormSchema>;
 
-type RouteParams = {
-  SignIn: {
-    uuid: string;
-  };
-};
-
 type SignInResponse = {
+  statusCode: number;
   data: {
-    statusCode: number;
-    data: {
-      access_token: string;
-    };
+    access_token: string;
   };
 };
 
@@ -60,16 +50,17 @@ const handleSignInResponse = (
   setAuthInfo: (token: string, clientId: string, role: string) => void,
   uuid: string | null
 ) => {
-  if (response.data.statusCode === 200) {
-    const { access_token } = response.data.data;
+  if (response.statusCode === 200) {
+    const { access_token } = response.data;
     setAuthInfo(access_token, uuid ? uuid : '', 'player');
     router.replace('/(tabs)');
   }
 };
 
 export default function SignIn() {
-  const { setAuthInfo } = useAuth();
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
+  const { setAuthInfo } = useAuth();
   const { control, handleSubmit } = useForm<SignInFormData>({
     defaultValues: {
       phone: '+84 ',
@@ -77,15 +68,16 @@ export default function SignIn() {
     },
     resolver: zodResolver(signInFormSchema),
   });
+  const [loading, setLoading] = React.useState(false);
 
   const signInUser = async (data: SignInFormData) => {
-    const response = await axios.post(`${apiUrl}/auth/sign-in`, data);
-    return response;
+    return await doPost(`${apiUrl}/auth/sign-in`, data);
   };
 
   const onSubmit = async (data: SignInFormData) => {
     let { phone } = data;
     phone = formatPhoneNumberSubmit(phone);
+    setLoading(true);
 
     try {
       const response = await signInUser({ ...data, phone });
@@ -93,8 +85,14 @@ export default function SignIn() {
       handleSignInResponse(response, setAuthInfo, uuid);
     } catch (error) {
       console.error('Error during sign-in:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
