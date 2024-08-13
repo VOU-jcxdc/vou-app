@@ -3,21 +3,13 @@ import { FlatList, SafeAreaView, Text, View } from 'react-native';
 
 import EventCard from '~/components/EventCard';
 import { Skeleton } from '~/components/ui/skeleton';
-import { useAuth } from '~/context/AuthContext';
 import { fetchEvents } from '~/lib/api/api';
 
 export default function Events() {
-  const { useAuthHandler } = useAuth();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
   });
-
-  useAuthHandler(error);
-
-  if (!data) {
-    return null;
-  }
 
   if (isLoading) {
     return (
@@ -26,6 +18,10 @@ export default function Events() {
         <Skeleton className='h-screen w-[372px]' />
       </View>
     );
+  }
+
+  if (!data) {
+    return null;
   }
 
   return (

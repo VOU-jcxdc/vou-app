@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
@@ -8,7 +9,6 @@ interface AuthContextType {
   role: string | null;
   setAuthInfo: (token: string, uuid: string, role: string) => void;
   clearAuthInfo: () => void;
-  useAuthHandler: (error: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,25 +17,43 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+interface DecodedToken {
+  userId: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [uuid, setUuid] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // New loading state
+  const [isLoading, setIsLoading] = useState(true);
+  let timeoutId: NodeJS.Timeout | null = null;
 
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('token');
         const storedUuid = await AsyncStorage.getItem('uuid');
-        const storedRole = await AsyncStorage.getItem('role');
 
-        if (storedToken && storedUuid && storedRole) {
-          setToken(storedToken);
-          setUuid(storedUuid);
-          setRole(storedRole);
-          setIsAuthenticated(true);
+        if (storedToken) {
+          const decodedToken: DecodedToken = jwtDecode<DecodedToken>(storedToken);
+          const currentTime = Date.now() / 1000;
+
+          if (decodedToken.exp > currentTime) {
+            setToken(storedToken);
+            setUuid(storedUuid);
+            setRole(decodedToken.role);
+            setIsAuthenticated(true);
+
+            // Schedule the next check just before the token expires
+            const timeout = (decodedToken.exp - currentTime - 60) * 1000; // 60 seconds before expiration
+            timeoutId = setTimeout(checkAuthStatus, timeout);
+          } else {
+            clearAuthInfo();
+          }
         } else {
           setIsAuthenticated(false);
         }
@@ -48,6 +66,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkAuthStatus();
+
+    // Clear the timeout on component unmount
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const setAuthInfo = (token: string, uuid: string, role: string) => {
@@ -72,20 +97,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('Auth Info Cleared');
   };
 
-  const useAuthHandler = (error: any) => {
-    useEffect(() => {
-      if (error && error.message.includes('401')) {
-        clearAuthInfo();
-      }
-    }, [error]);
-  };
-
   if (isLoading) {
-    return null; // Return null while
+    return null; // Return null while loading
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo, useAuthHandler }}>
+    <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo }}>
       {children}
     </AuthContext.Provider>
   );

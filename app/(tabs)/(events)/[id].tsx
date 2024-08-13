@@ -20,14 +20,15 @@ export default function EventDetails() {
     queryFn: fetchEvent,
   });
 
+  const { data: eventImage } = useQuery({
+    queryKey: ['file', data?.images[0] || ''],
+    queryFn: () => fetchFile,
+    enabled: !!data,
+  });
+
   if (!data) {
     return null;
   }
-
-  const { data: eventImage } = useQuery({
-    queryKey: ['file', data.images[0]],
-    queryFn: fetchFile,
-  });
 
   if (isLoading) {
     return (
