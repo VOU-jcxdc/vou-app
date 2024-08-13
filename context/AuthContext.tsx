@@ -8,6 +8,7 @@ interface AuthContextType {
   role: string | null;
   setAuthInfo: (token: string, uuid: string, role: string) => void;
   clearAuthInfo: () => void;
+  useAuthHandler: (error: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,12 +72,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('Auth Info Cleared');
   };
 
+  const useAuthHandler = (error: any) => {
+    useEffect(() => {
+      if (error && error.message.includes('401')) {
+        clearAuthInfo();
+      }
+    }, [error]);
+  };
+
   if (isLoading) {
     return null; // Return null while
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo }}>
+    <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo, useAuthHandler }}>
       {children}
     </AuthContext.Provider>
   );

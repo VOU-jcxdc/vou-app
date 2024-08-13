@@ -28,6 +28,8 @@ import { useRefreshByUser } from '~/hooks/useRefreshByUser';
 import { fetchUser } from '~/lib/api/api';
 import { User } from '~/lib/interfaces/user';
 
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
 const ProfileFormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),
   phone: z.string().min(10, 'Phone number is invalid.').max(11, 'Phone number is invalid.'),
@@ -42,7 +44,6 @@ function checkChanges(user: ProfileForm, data: ProfileForm) {
 
 export default function EditProfile() {
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
-  const [image, setImage] = React.useState<string | null>(null);
   const { isPending, error, data, refetch } = useQuery<Pick<User, 'bucketId' | 'email' | 'phone' | 'username'>, Error>({
     queryKey: ['user'],
     queryFn: fetchUser,
@@ -61,9 +62,12 @@ export default function EditProfile() {
     resolver: zodResolver(ProfileFormSchema),
   });
 
+  if (!data) return null;
+
+  const [image, setImage] = React.useState<string | null>(data.bucketId);
+
   if (isPending) return <LoadingIndicator />;
   if (error) return <ErrorMessage message={error.message}></ErrorMessage>;
-  if (!data) return null;
 
   const uploadCameraImage = async () => {
     try {
@@ -186,7 +190,11 @@ export default function EditProfile() {
             <View className='w-full'>
               <Pressable className='items-center gap-6' onPress={() => setModalVisible(true)}>
                 <ProfileAvatar
-                  uri={image || data?.bucketId || 'https://picsum.photos/id/1/200/300'}
+                  uri={
+                    `${apiUrl}/files/${image}` ||
+                    `${apiUrl}/files/${data.bucketId}` ||
+                    'https://picsum.photos/id/1/200/300'
+                  }
                   alt={data?.username}
                 />
                 <Text className='text-foreground'>Edit Profile Picture</Text>

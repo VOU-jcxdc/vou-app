@@ -7,19 +7,26 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Skeleton } from '~/components/ui/skeleton';
+import { fetchEvent, fetchFile } from '~/lib/api/api';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
-const fetchEventById = async (id: string | string[] | undefined) => {
-  const res = await fetch(`https://66a253fa967c89168f1fa708.mockapi.io/events/${id}`);
-  return res.json();
-};
+const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function EventDetails() {
   const [isFavorite, setIsFavorite] = React.useState(false);
   const { id } = useLocalSearchParams();
   const { data, isLoading } = useQuery({
-    queryKey: ['events', id],
-    queryFn: () => fetchEventById(id),
+    queryKey: ['event', id as string],
+    queryFn: fetchEvent,
+  });
+
+  if (!data) {
+    return null;
+  }
+
+  const { data: eventImage } = useQuery({
+    queryKey: ['file', data.images[0]],
+    queryFn: fetchFile,
   });
 
   if (isLoading) {
@@ -34,7 +41,7 @@ export default function EventDetails() {
     );
   }
 
-  const { beginDate, endDate, isCurrent } = getEventDateInfo(data?.begin_date, data?.end_date);
+  const { beginDate, endDate, isCurrent } = getEventDateInfo(data.beginDate, data.endDate);
 
   const handleShare = () => {
     alert('Share event');
@@ -55,7 +62,12 @@ export default function EventDetails() {
     <View className='flex-1 gap-4'>
       <ScrollView>
         <View className='aspect-video'>
-          <Image className='h-full w-full object-cover' source={{ uri: data?.image }} />
+          <Image
+            className='h-full w-full object-cover'
+            source={{
+              uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+            }}
+          />
         </View>
         <View className='gap-3 p-5'>
           <View className='flex flex-row items-center justify-between'>

@@ -3,17 +3,21 @@ import { FlatList, SafeAreaView, Text, View } from 'react-native';
 
 import EventCard from '~/components/EventCard';
 import { Skeleton } from '~/components/ui/skeleton';
-
-const fetchEvents = async () => {
-  const res = await fetch('https://66a253fa967c89168f1fa708.mockapi.io/events');
-  return res.json();
-};
+import { useAuth } from '~/context/AuthContext';
+import { fetchEvents } from '~/lib/api/api';
 
 export default function Events() {
-  const { data, isLoading } = useQuery({
+  const { useAuthHandler } = useAuth();
+  const { data, isLoading, error } = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
   });
+
+  useAuthHandler(error);
+
+  if (!data) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -29,15 +33,15 @@ export default function Events() {
       <View className='gap-4'>
         <Text className='text-xl font-bold'>Current Events</Text>
         <FlatList
-          data={data}
+          data={data.events}
           renderItem={({ item }) => (
             <EventCard
               id={item.id}
               name={item.name}
-              brand_name={item.brand_name}
-              begin_date={item.begin_date}
-              end_date={item.end_date}
-              image={item.image}
+              brand_name={item.brandId}
+              begin_date={item.beginDate}
+              end_date={item.endDate}
+              image={item.images[0]}
               horizontal={true}
             />
           )}
@@ -49,15 +53,15 @@ export default function Events() {
       <View className='flex-1 gap-4'>
         <Text className='text-xl font-bold'>In-coming Events</Text>
         <FlatList
-          data={data}
+          data={data.events}
           renderItem={({ item }) => (
             <EventCard
               id={item.id}
               name={item.name}
-              brand_name={item.brand_name}
-              begin_date={item.begin_date}
-              end_date={item.end_date}
-              image={item.image}
+              brand_name={item.brandId}
+              begin_date={item.beginDate}
+              end_date={item.endDate}
+              image={item.images[0]}
             />
           )}
           ItemSeparatorComponent={() => <View className='h-4' />}
