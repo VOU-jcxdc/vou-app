@@ -70,6 +70,7 @@ export default function SignIn() {
     resolver: zodResolver(signInFormSchema),
   });
   const [loading, setLoading] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const signInUser = async (data: SignInFormData) => {
     return await doPost(`${apiUrl}/auth/sign-in`, data);
@@ -84,8 +85,9 @@ export default function SignIn() {
       const response = await signInUser({ ...data, phone });
       const uuid = await getUserByPhoneNumber(phone);
       handleSignInResponse(response, setAuthInfo, uuid);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during sign-in:', error);
+      setErrorMessage(error.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -149,6 +151,7 @@ export default function SignIn() {
             </View>
           </View>
         </View>
+        {errorMessage && <Text className='text-sm font-medium text-destructive'>{errorMessage}</Text>}
         <View className='flex-1 justify-end gap-4'>
           <Button size='lg' onPress={handleSubmit(onSubmit)}>
             <Text>Sign in</Text>
