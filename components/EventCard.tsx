@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { Image, ImageBackground, Pressable, View } from 'react-native';
+import { Image, ImageBackground, View } from 'react-native';
 
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
 import { fetchFile } from '~/lib/api/api';
+import { getEventDateInfo } from '~/utils/DateTimeUtils';
+
 import { LoadingIndicator } from './LoadingIndicator';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -34,8 +35,7 @@ export default function EventCard({
     queryFn: fetchFile,
   });
 
-  const beginDate = new Date(begin_date).toLocaleDateString();
-  const endDate = new Date(end_date).toLocaleDateString();
+  const { beginDate, endDate } = getEventDateInfo(begin_date, end_date);
 
   if (isLoading) {
     return (
@@ -49,14 +49,7 @@ export default function EventCard({
 
   return (
     <Card className={horizontal ? 'aspect-square h-56' : 'h-36'}>
-      <Pressable
-        className='h-full'
-        onPress={() =>
-          router.push({
-            pathname: `/[id]`,
-            params: { id },
-          })
-        }>
+      <View className='h-full'>
         {horizontal ? (
           <ImageBackground
             className='h-full w-full justify-end object-cover'
@@ -103,7 +96,7 @@ export default function EventCard({
             </View>
           </View>
         )}
-      </Pressable>
+      </View>
     </Card>
   );
 }

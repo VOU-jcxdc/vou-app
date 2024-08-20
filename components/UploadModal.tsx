@@ -26,7 +26,7 @@ export default function UploadModal({
         {isLoading && <Skeleton className='h-full w-full' />}
 
         {!isLoading && (
-          <View className='w-full items-center justify-center gap-6 rounded-3xl bg-background px-5 py-10'>
+          <View className='w-full items-center justify-center gap-6 rounded-3xl bg-background px-5 py-10 border'>
             <Text className='text-2xl font-semibold'>Profile Photo</Text>
             <View className='flex flex-row items-center gap-6'>
               <Pressable className='h-20 w-24 items-center justify-center rounded bg-secondary' onPress={onCameraPress}>

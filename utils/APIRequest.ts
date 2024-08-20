@@ -40,4 +40,40 @@ async function doPatch(url: string, data: any) {
   return response.data;
 }
 
-export { doGet, doPatch, doPost };
+async function doPut(url: string, data: any) {
+  const token = (await AsyncStorage.getItem('token')) || '';
+
+  const response = await axios.put(url, data, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+    },
+  });
+
+  return response.data;
+}
+
+async function doDelete(url: string) {
+  const token = (await AsyncStorage.getItem('token')) || '';
+
+  const response = await axios.delete(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+    },
+  });
+
+  return response.data;
+}
+
+async function doImageUpload(url: string, data: any) {
+  const response = await axios.put(url, data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response;
+}
+
+export { doDelete, doGet, doImageUpload, doPatch, doPost, doPut };

@@ -11,8 +11,8 @@ import { Label } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { Text } from '~/components/ui/text';
 import { dateRegex, formatDOB } from '~/utils/DateTimeUtils';
-import { formatPhoneNumber, formatPhoneNumberSubmit } from '~/utils/PhoneUtils';
 import { Gender } from '~/utils/enum';
+import { formatPhoneNumber, formatPhoneNumberSubmit } from '~/utils/PhoneUtils';
 
 const signUpFormSchema = z
   .object({

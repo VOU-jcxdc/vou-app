@@ -10,7 +10,7 @@ export default function FavoriteEventsLayout() {
         }}
       />
       <Stack.Screen
-        name='[id]'
+        name='favorite-event-details/[id]'
         options={{
           title: 'Event Details',
         }}

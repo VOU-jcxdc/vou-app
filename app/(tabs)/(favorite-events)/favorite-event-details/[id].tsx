@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
@@ -7,16 +7,16 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Skeleton } from '~/components/ui/skeleton';
-import { fetchEvent, fetchFile } from '~/lib/api/api';
+import { addFavoriteEvent, fetchEvent, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
-export default function EventDetails() {
-  const [isFavorite, setIsFavorite] = React.useState(false);
+export default function FavoriteEventDetails() {
+  const [isFavorite, setIsFavorite] = React.useState(true);
   const { id } = useLocalSearchParams();
   const { data, isLoading } = useQuery({
-    queryKey: ['event', id as string],
+    queryKey: ['favoriteEvent', id as string],
     queryFn: fetchEvent,
   });
 
@@ -24,6 +24,28 @@ export default function EventDetails() {
     queryKey: ['file', data?.images[0] || ''],
     queryFn: () => fetchFile,
     enabled: !!data,
+  });
+
+  const addFavoriteEventMutation = useMutation({
+    mutationFn: addFavoriteEvent,
+    onSuccess: () => {
+      alert('Add to favorite');
+      setIsFavorite(true);
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const removeFavoriteEventMutation = useMutation({
+    mutationFn: removeFavoriteEvent,
+    onSuccess: () => {
+      alert('Remove from favorite');
+      setIsFavorite(false);
+    },
+    onError: (error) => {
+      console.error(error);
+    },
   });
 
   if (!data) {
@@ -50,13 +72,10 @@ export default function EventDetails() {
 
   const handleFavorite = () => {
     if (isFavorite) {
-      // Remove from favorite
+      removeFavoriteEventMutation.mutate({ eventId: data.id });
     } else {
-      // Save to favorite
-      alert('Add to favorite');
+      addFavoriteEventMutation.mutate({ eventId: data.id });
     }
-
-    setIsFavorite(!isFavorite);
   };
 
   return (

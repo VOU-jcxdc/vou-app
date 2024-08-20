@@ -10,7 +10,7 @@ export default function EventsLayout() {
         }}
       />
       <Stack.Screen
-        name='[id]'
+        name='event-details/[id]'
         options={{
           title: 'Event Details',
         }}

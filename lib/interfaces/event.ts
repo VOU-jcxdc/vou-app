@@ -8,6 +8,8 @@ interface Event {
   description: string;
   status: string;
   images: string[];
+  brandInfo: object;
+  favorite?: boolean;
 }
 
 interface EventsResponse {
@@ -17,4 +19,11 @@ interface EventsResponse {
   limit: number;
 }
 
-export { Event, EventsResponse };
+interface FavoriteEventsResponse {
+  favoriteEvents: Event[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export { Event, EventsResponse, FavoriteEventsResponse };

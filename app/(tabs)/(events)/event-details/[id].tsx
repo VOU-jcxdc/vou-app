@@ -1,26 +1,56 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import * as React from 'react';
+import { useState } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Skeleton } from '~/components/ui/skeleton';
+import { addFavoriteEvent, fetchEvent, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
-const fetchFavoriteEventById = async (id: string | string[] | undefined) => {
-  const res = await fetch(`https://66a253fa967c89168f1fa708.mockapi.io/events/${id}`);
-  return res.json();
-};
+const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
-export default function FavoriteEventDetails() {
-  const [isFavorite, setIsFavorite] = React.useState(true);
-  const { id } = useLocalSearchParams();
+export default function EventDetails() {
+  const { id, favorite } = useLocalSearchParams();
+  const [isFavorite, setIsFavorite] = useState(favorite || false);
   const { data, isLoading } = useQuery({
-    queryKey: ['events', id],
-    queryFn: () => fetchFavoriteEventById(id),
+    queryKey: ['event', id as string],
+    queryFn: fetchEvent,
   });
+
+  const { data: eventImage } = useQuery({
+    queryKey: ['file', data?.images[0] || ''],
+    queryFn: () => fetchFile,
+    enabled: !!data,
+  });
+
+  const addFavoriteEventMutation = useMutation({
+    mutationFn: addFavoriteEvent,
+    onSuccess: () => {
+      alert('Add to favorite');
+      setIsFavorite(true);
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const removeFavoriteEventMutation = useMutation({
+    mutationFn: removeFavoriteEvent,
+    onSuccess: () => {
+      alert('Remove from favorite');
+      setIsFavorite(false);
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  if (!data) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -34,7 +64,7 @@ export default function FavoriteEventDetails() {
     );
   }
 
-  const { beginDate, endDate, isCurrent } = getEventDateInfo(data?.begin_date, data?.end_date);
+  const { beginDate, endDate, isCurrent } = getEventDateInfo(data.beginDate, data.endDate);
 
   const handleShare = () => {
     alert('Share event');
@@ -42,20 +72,22 @@ export default function FavoriteEventDetails() {
 
   const handleFavorite = () => {
     if (isFavorite) {
-      // Remove from favorite
+      removeFavoriteEventMutation.mutate({ eventId: data.id });
     } else {
-      // Save to favorite
-      alert('Add to favorite');
+      addFavoriteEventMutation.mutate({ eventId: data.id });
     }
-
-    setIsFavorite(!isFavorite);
   };
 
   return (
     <View className='flex-1 gap-4'>
       <ScrollView>
         <View className='aspect-video'>
-          <Image className='h-full w-full object-cover' source={{ uri: data?.image }} />
+          <Image
+            className='h-full w-full object-cover'
+            source={{
+              uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+            }}
+          />
         </View>
         <View className='gap-3 p-5'>
           <View className='flex flex-row items-center justify-between'>

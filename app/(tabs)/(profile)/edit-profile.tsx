@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as React from 'react';
@@ -17,32 +18,34 @@ import {
   View,
 } from 'react-native';
 import { z } from 'zod';
+
 import { ErrorMessage } from '~/components/ErrorMessage';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
-
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
 import { Button } from '~/components/ui/button';
 import UploadModal from '~/components/UploadModal';
 import { useRefreshByUser } from '~/hooks/useRefreshByUser';
-import { fetchUser } from '~/lib/api/api';
+import { createPresignedUrl, createUploadPresignedUrl, fetchUser, updateUserProfile, uploadFile } from '~/lib/api/api';
 import { User } from '~/lib/interfaces/user';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 const ProfileFormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),
-  phone: z.string().min(10, 'Phone number is invalid.').max(11, 'Phone number is invalid.'),
   email: z.string().email('Please enter a valid email.'),
+  bucketId: z.string().nullable(),
 });
 
 type ProfileForm = z.infer<typeof ProfileFormSchema>;
 
 function checkChanges(user: ProfileForm, data: ProfileForm) {
-  return user.username !== data.username || user.phone !== data.phone || user.email !== data.email;
+  return user.username !== data.username || user.email !== data.email;
 }
 
 export default function EditProfile() {
+  const [image, setImage] = React.useState<string | null>('');
+  const [uploadImage, setUploadImage] = React.useState<ImagePicker.ImagePickerSuccessResult | null>(null);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
   const { isPending, error, data, refetch } = useQuery<Pick<User, 'bucketId' | 'email' | 'phone' | 'username'>, Error>({
     queryKey: ['user'],
@@ -56,15 +59,23 @@ export default function EditProfile() {
   } = useForm<ProfileForm>({
     defaultValues: {
       username: data?.username,
-      phone: data?.phone,
       email: data?.email,
+      bucketId: data?.bucketId,
     },
     resolver: zodResolver(ProfileFormSchema),
   });
+  const profileMutation = useMutation({
+    mutationFn: updateUserProfile,
+    onSuccess: () => {
+      alert('Profile updated');
+      router.navigate('/(profile)');
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
 
   if (!data) return null;
-
-  const [image, setImage] = React.useState<string | null>(data.bucketId);
 
   if (isPending) return <LoadingIndicator />;
   if (error) return <ErrorMessage message={error.message}></ErrorMessage>;
@@ -80,6 +91,7 @@ export default function EditProfile() {
       });
 
       if (!result.canceled) {
+        setUploadImage(result);
         await saveImage(result.assets[0].uri);
       }
     } catch (error) {
@@ -98,6 +110,7 @@ export default function EditProfile() {
       });
 
       if (!result.canceled) {
+        setUploadImage(result);
         await saveImage(result.assets[0].uri);
       }
     } catch (error) {
@@ -107,6 +120,7 @@ export default function EditProfile() {
 
   const removeImage = async () => {
     try {
+      setUploadImage(null);
       await saveImage(null);
     } catch (error) {
       alert(error);
@@ -123,60 +137,37 @@ export default function EditProfile() {
     }
   };
 
-  const onSubmit: SubmitHandler<ProfileForm> = (formData) => {
-    if (checkChanges(data, formData) || image) {
-      alert(JSON.stringify(formData));
-      if (image !== data.bucketId) {
-        fetch('https://146.190.100.11:3000/files/presigned-url', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            file: image,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            fetch(data.url, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'image/jpeg',
-              },
-              body: image,
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                fetch('https://146.190.100.11:3000/files/upload-confirmation', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    file: data.key,
-                  }),
-                })
-                  .then((response) => response.json())
-                  .then((data) => {
-                    console.log('Success:', data);
-                  })
-                  .catch((error) => {
-                    console.error('Error:', error);
-                  });
-              })
-              .catch((error) => {
-                console.error('Error:', error);
-              });
-          })
-          .catch((error) => {
-            console.error('Error:', error);
-          });
+  const onSubmit: SubmitHandler<ProfileForm> = async (formData) => {
+    if (checkChanges(data, formData) || image !== '') {
+      formData = {
+        ...formData,
+        bucketId: data.bucketId,
+      };
+
+      if (image !== null && uploadImage !== null) {
+        const imageFormData = new FormData();
+        const uuid = (await AsyncStorage.getItem('uuid')) || '';
+
+        imageFormData.append('image', {
+          uri: image,
+          type: 'image/jpeg',
+          file: uploadImage.assets[0],
+          filename: `profile-${uuid}.jpg`,
+        } as any);
+
+        if (!data.bucketId) {
+          const presignedUrl = await createPresignedUrl();
+          uploadFile({ file: imageFormData, url: presignedUrl.url, id: presignedUrl.id });
+          formData.bucketId = presignedUrl.id;
+        } else {
+          const presignedUrl = await createUploadPresignedUrl({ id: data.bucketId });
+          uploadFile({ file: imageFormData, url: presignedUrl.url, id: presignedUrl.id });
+          formData.bucketId = presignedUrl.id;
+        }
       }
+
+      profileMutation.mutate(formData);
     }
-
-    //Mutation
-
-    router.navigate('/(profile)');
   };
 
   return (
@@ -188,15 +179,8 @@ export default function EditProfile() {
           contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <View className='w-full gap-6 justify-around items-center'>
             <View className='w-full'>
-              <Pressable className='items-center gap-6' onPress={() => setModalVisible(true)}>
-                <ProfileAvatar
-                  uri={
-                    `${apiUrl}/files/${image}` ||
-                    `${apiUrl}/files/${data.bucketId}` ||
-                    'https://picsum.photos/id/1/200/300'
-                  }
-                  alt={data?.username}
-                />
+              <Pressable className='items-center gap-6 pb-6' onPress={() => setModalVisible(true)}>
+                <ProfileAvatar uri={(image as string) || `${apiUrl}/files/${data.bucketId}`} alt={data?.username} />
                 <Text className='text-foreground'>Edit Profile Picture</Text>
               </Pressable>
             </View>
@@ -218,22 +202,6 @@ export default function EditProfile() {
                 <Controller
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
-                    <ProfileInput
-                      label='Phone'
-                      value={value}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      keyboardType='phone-pad'
-                    />
-                  )}
-                  name='phone'
-                  rules={{ required: true }}
-                />
-                {errors.phone && <Text className='text-sm font-medium text-destructive'>{errors.phone.message}</Text>}
-
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
                     <ProfileInput label='Email' value={value} onBlur={onBlur} onChangeText={onChange} />
                   )}
                   name='email'
@@ -244,7 +212,7 @@ export default function EditProfile() {
             </TouchableWithoutFeedback>
           </View>
 
-          <View className='w-full px-10'>
+          <View className='w-full p-10'>
             <Button className='rounded bg-primary' onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
               <Text className='font-bold text-primary-foreground'>Save</Text>
             </Button>
