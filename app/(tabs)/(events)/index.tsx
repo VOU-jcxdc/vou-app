@@ -96,6 +96,7 @@ export default function Events() {
           )}
           ItemSeparatorComponent={() => <View className='h-4' />}
           keyExtractor={(item) => item.id}
+          contentContainerClassName='p-4'
           onEndReached={onEndReached}
           refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={<Text>No events found</Text>}

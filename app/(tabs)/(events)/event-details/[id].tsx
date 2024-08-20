@@ -2,12 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { FlatList, Image, Text, View } from 'react-native';
 
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Skeleton } from '~/components/ui/skeleton';
-import { addFavoriteEvent, fetchEvent, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import VoucherCard from '~/components/VoucherCard';
+import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -53,6 +54,12 @@ export default function EventDetails() {
     },
   });
 
+  const { data: eventVouchers } = useQuery({
+    queryKey: ['event-vouchers', id as string],
+    queryFn: fetchEventVouchers,
+    enabled: !!data,
+  });
+
   if (!data) {
     return null;
   }
@@ -85,57 +92,85 @@ export default function EventDetails() {
 
   return (
     <View className='flex-1 gap-4'>
-      <ScrollView>
-        <View className='aspect-video'>
-          <Image
-            className='h-full w-full object-cover'
-            source={{
-              uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
-            }}
-          />
-        </View>
-        <View className='gap-3 p-5'>
-          <View className='flex flex-row items-center justify-between'>
-            <View className='gap-2'>
-              <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
-                <Text className={isCurrent ? 'text-green-600' : 'text-primary'}>
-                  {isCurrent ? 'Happening event' : 'In-coming event'}
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <View className='aspect-video'>
+              <Image
+                className='h-full w-full object-cover'
+                source={{
+                  uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+                }}
+              />
+            </View>
+            <View className='gap-3 p-4'>
+              <View className='flex flex-row items-center justify-between'>
+                <View className='gap-2'>
+                  <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
+                    <Text className={isCurrent ? 'text-green-600' : 'text-primary'}>
+                      {isCurrent ? 'Happening event' : 'In-coming event'}
+                    </Text>
+                  </Badge>
+                  <Text>
+                    {beginDate} - {endDate}
+                  </Text>
+                </View>
+                <View className='flex flex-row gap-2'>
+                  <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleShare}>
+                    <Ionicons name='share-social-outline' size={24} />
+                  </Button>
+                  <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
+                    <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} />
+                  </Button>
+                </View>
+              </View>
+              <View className='gap-3'>
+                <Text className='text-3xl font-bold'>{data?.name}</Text>
+                <Text>{data?.description}</Text>
+              </View>
+              <View className='gap-2'>
+                <Text className='text-xl font-bold'>Event Time</Text>
+                <Text>
+                  From {beginDate} to {endDate}
                 </Text>
-              </Badge>
-              <Text>
-                {beginDate} - {endDate}
-              </Text>
+              </View>
+              <View className='gap-2'>
+                <Text className='text-xl font-bold'>Instruction</Text>
+                <Text>{data?.description}</Text>
+              </View>
+              <View className='gap-2'>
+                <Text className='text-xl font-bold'>Rewards</Text>
+              </View>
             </View>
-            <View className='flex flex-row gap-2'>
-              <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleShare}>
-                <Ionicons name='share-social-outline' size={24} />
-              </Button>
-              <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
-                <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} />
-              </Button>
+          </>
+        }
+        data={eventVouchers}
+        renderItem={({ item }) => {
+          const { voucher } = item;
+          return (
+            <View className='mx-4'>
+              <VoucherCard
+                id={voucher.id}
+                name={voucher.name}
+                description={voucher.description}
+                brandId={voucher.brandId}
+                duration={voucher.duration}
+                usageMode={voucher.usageMode}
+                showButton={false}
+              />
             </View>
+          );
+        }}
+        keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={() => <View className='h-4' />}
+        ListFooterComponent={
+          <View className='w-full p-4'>
+            <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
+              <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
+            </Button>
           </View>
-          <View className='gap-3'>
-            <Text className='text-3xl font-bold'>{data?.name}</Text>
-            <Text>{data?.description}</Text>
-          </View>
-          <View className='gap-2'>
-            <Text className='text-xl font-bold'>Event Time</Text>
-            <Text>
-              From {beginDate} to {endDate}
-            </Text>
-          </View>
-          <View className='gap-2'>
-            <Text className='text-xl font-bold'>Instruction</Text>
-            <Text>{data?.description}</Text>
-          </View>
-        </View>
-      </ScrollView>
-      <View className='w-full p-5'>
-        <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
-          <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
-        </Button>
-      </View>
+        }
+      />
     </View>
   );
 }

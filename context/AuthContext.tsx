@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [uuid, setUuid] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  let timeoutId: NodeJS.Timeout | null = null;
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIsAuthenticated(true);
 
             // Schedule the next check just before the token expires
-            const timeout = (decodedToken.exp - currentTime - 60) * 1000; // 60 seconds before expiration
-            timeoutId = setTimeout(checkAuthStatus, timeout);
+            const timeout = (decodedToken.exp - currentTime) * 1000;
+            setTimeoutId(setTimeout(checkAuthStatus, timeout));
           } else {
             clearAuthInfo();
           }
@@ -93,8 +93,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     AsyncStorage.removeItem('token');
     AsyncStorage.removeItem('uuid');
     AsyncStorage.removeItem('role');
-
-    console.log('Auth Info Cleared');
   };
 
   if (isLoading) {
