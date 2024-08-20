@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as React from 'react';
@@ -47,6 +47,7 @@ export default function EditProfile() {
   const [image, setImage] = React.useState<string | null>('');
   const [uploadImage, setUploadImage] = React.useState<ImagePicker.ImagePickerSuccessResult | null>(null);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
   const { isPending, error, data, refetch } = useQuery<Pick<User, 'bucketId' | 'email' | 'phone' | 'username'>, Error>({
     queryKey: ['user'],
     queryFn: fetchUser,
@@ -67,6 +68,7 @@ export default function EditProfile() {
   const profileMutation = useMutation({
     mutationFn: updateUserProfile,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       alert('Profile updated');
       router.navigate('/(profile)');
     },
@@ -157,11 +159,11 @@ export default function EditProfile() {
 
         if (!data.bucketId) {
           const presignedUrl = await createPresignedUrl();
-          uploadFile({ file: imageFormData, url: presignedUrl.url, id: presignedUrl.id });
+          uploadFile({ file: image, url: presignedUrl.url, id: presignedUrl.id });
           formData.bucketId = presignedUrl.id;
         } else {
           const presignedUrl = await createUploadPresignedUrl({ id: data.bucketId });
-          uploadFile({ file: imageFormData, url: presignedUrl.url, id: presignedUrl.id });
+          uploadFile({ file: image, url: presignedUrl.url, id: presignedUrl.id });
           formData.bucketId = presignedUrl.id;
         }
       }

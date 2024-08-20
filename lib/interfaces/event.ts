@@ -1,3 +1,5 @@
+import { BrandInfo } from './accountInfo';
+
 interface Event {
   id: string;
   name: string;
@@ -8,7 +10,7 @@ interface Event {
   description: string;
   status: string;
   images: string[];
-  brandInfo: object;
+  brandInfo: BrandInfo;
   favorite?: boolean;
 }
 

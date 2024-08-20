@@ -121,7 +121,7 @@ export async function createUploadPresignedUrl(params: { id: string }): Promise<
   return Promise.resolve(url as PresignedUrl);
 }
 
-export async function uploadFile(params: { file: object; url: string; id: string }) {
+export async function uploadFile(params: { file: string; url: string; id: string }) {
   const { file, url, id } = params;
   const response = await doImageUpload(url, file);
 

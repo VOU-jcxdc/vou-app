@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
@@ -15,6 +15,7 @@ const apiURl = process.env.EXPO_PUBLIC_API_URL;
 export default function FavoriteEventDetails() {
   const [isFavorite, setIsFavorite] = React.useState(true);
   const { id } = useLocalSearchParams();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['favoriteEvent', id as string],
     queryFn: fetchEvent,
@@ -29,6 +30,8 @@ export default function FavoriteEventDetails() {
   const addFavoriteEventMutation = useMutation({
     mutationFn: addFavoriteEvent,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['favoriteEvents'] });
       alert('Add to favorite');
       setIsFavorite(true);
     },
@@ -40,6 +43,8 @@ export default function FavoriteEventDetails() {
   const removeFavoriteEventMutation = useMutation({
     mutationFn: removeFavoriteEvent,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['favoriteEvents'] });
       alert('Remove from favorite');
       setIsFavorite(false);
     },
