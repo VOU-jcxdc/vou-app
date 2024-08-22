@@ -1,13 +1,21 @@
-import { router } from 'expo-router';
-import { Image, View } from 'react-native';
-import { AccountsVouchers, BrandInfo, User, Voucher } from '~/lib/interfaces';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Image, ToastAndroid, TouchableOpacity, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+import { updateUsedVoucher } from '~/lib/api/api';
+import { AccountsVouchers, Voucher } from '~/lib/interfaces';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger } from './ui/dialog';
 import { Text } from './ui/text';
 
-type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'brandId' | 'usageMode'> &
+const apiURl = process.env.EXPO_PUBLIC_API_URL;
+
+type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
   Partial<Pick<AccountsVouchers, 'assignedOn'>> & {
-    showButton?: boolean;
+    isAssigned?: boolean;
+    brandInfo?: { name: string; bucketId: string };
   };
 
 function DurationText({ assigned_on, duration }: { assigned_on: string; duration: number }) {
@@ -31,22 +39,28 @@ export default function VoucherCard({
   id,
   name,
   description,
-  brandId,
+  code,
+  brandInfo,
   duration,
   assignedOn,
   usageMode,
-  showButton = true,
+  isAssigned = true,
 }: VoucherCardProps) {
-  const brand: Partial<BrandInfo> & Pick<User, 'bucketId'> = {
-    name: 'Kai Coffee',
-    bucketId: 'https://picsum.photos/id/1/200/300',
+  const queryClient = useQueryClient();
+  const usedVoucherMutation = useMutation({
+    mutationFn: updateUsedVoucher,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['voucher', id as string] });
+    },
+  });
+
+  const handleDone = () => {
+    usedVoucherMutation.mutate({ id });
   };
 
-  const handleGiftExchange = () => {
-    router.push({
-      pathname: '/gift-exchange',
-      params: { id },
-    });
+  const copyToClipboard = () => {
+    Clipboard.setString(code);
+    ToastAndroid.show('Đã sao chép mã', ToastAndroid.SHORT);
   };
 
   return (
@@ -55,9 +69,9 @@ export default function VoucherCard({
         <View className='h-36 w-36 bg-slate-50 flex items-center justify-center gap-2'>
           <Image
             className='rounded-full h-12 w-12'
-            source={{ uri: brand.bucketId || 'https://picsum.photos/id/1/200/300' }}
+            source={{ uri: `${apiURl}/files/${brandInfo?.bucketId}` || 'https://picsum.photos/id/1/200/300' }}
           />
-          <Text className='text-base font-semibold'>{brand.name}</Text>
+          <Text className='text-base font-semibold'>{brandInfo?.name || 'Brand name'}</Text>
         </View>
         <View className='flex-1'>
           <Text className='text-xl font-bold'>{name}</Text>
@@ -65,10 +79,45 @@ export default function VoucherCard({
           {assignedOn && <DurationText assigned_on={assignedOn} duration={duration} />}
           <View className='flex flex-row justify-between'>
             <Text className='bg-secondary px-3 py-1 rounded-2xl self-center text-sm'>{usageMode}</Text>
-            {showButton && (
-              <Button variant='ghost' onPress={handleGiftExchange}>
-                <Text className='text-primary font-medium'>Đổi quà</Text>
-              </Button>
+            {isAssigned && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant='ghost'>
+                    <Text className='text-primary font-medium'>Đổi quà</Text>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className='w-96'>
+                  <View className='flex gap-5 items-center'>
+                    <View className=' flex items-center justify-center gap-2'>
+                      <Image
+                        className='rounded-full h-24 w-24'
+                        source={{
+                          uri: `${apiURl}/files/${brandInfo?.bucketId}` || 'https://picsum.photos/id/1/200/300',
+                        }}
+                      />
+                    </View>
+                    <View className='flex items-center'>
+                      <Text className='text-base'>{brandInfo?.name || 'Brand name'}</Text>
+                      <View className='flex flex-row items-center gap-2'>
+                        <Text className='text-lg font-medium'>{code}</Text>
+                        <TouchableOpacity onPress={copyToClipboard}>
+                          <Ionicons name='copy-outline' size={20} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View className='p-5 rounded border-slate-200 border'>
+                      <QRCode value={code} />
+                    </View>
+                  </View>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button onPress={handleDone}>
+                        <Text>Done</Text>
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           </View>
         </View>

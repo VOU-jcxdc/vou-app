@@ -9,12 +9,6 @@ export default function VouchersLayout() {
           title: 'Vouchers',
         }}
       />
-      <Stack.Screen
-        name='gift-exchange'
-        options={{
-          title: 'QR Mã quà tặng',
-        }}
-      />
     </Stack>
   );
 }

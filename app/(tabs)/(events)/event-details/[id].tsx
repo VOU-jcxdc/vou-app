@@ -103,7 +103,7 @@ export default function EventDetails() {
                 }}
               />
             </View>
-            <View className='gap-3 p-4'>
+            <View className='gap-3 m-4'>
               <View className='flex flex-row items-center justify-between'>
                 <View className='gap-2'>
                   <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
@@ -153,10 +153,11 @@ export default function EventDetails() {
                 id={voucher.id}
                 name={voucher.name}
                 description={voucher.description}
-                brandId={voucher.brandId}
+                code={voucher.code}
+                brandInfo={{ name: data.brandInfo.name, bucketId: data.brandInfo.bucketId }}
                 duration={voucher.duration}
                 usageMode={voucher.usageMode}
-                showButton={false}
+                isAssigned={false}
               />
             </View>
           );
@@ -164,7 +165,7 @@ export default function EventDetails() {
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View className='h-4' />}
         ListFooterComponent={
-          <View className='w-full p-4'>
+          <View className='w-full px-4 py-4'>
             <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>

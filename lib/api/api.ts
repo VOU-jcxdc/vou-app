@@ -163,3 +163,12 @@ export async function fetchAcountVouchers(): Promise<AccountsVouchersResponse[]>
 
   return Promise.resolve(vouchers as AccountsVouchersResponse[]);
 }
+
+export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
+  console.log('updateUsedVoucher', `${apiUrl}/users/voucher/${id}/applying`);
+  const response = await doPut(`${apiUrl}/users/voucher/${id}/applying`, {
+    quantity: 1,
+  });
+
+  return Promise.resolve(response.data);
+}

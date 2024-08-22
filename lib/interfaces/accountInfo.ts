@@ -9,7 +9,7 @@ interface BrandInfo {
   field: string;
   address: string;
   gps: GPS;
-  accountId: string;
+  bucketId: string;
 }
 
 export { BrandInfo };

@@ -1,3 +1,5 @@
+import { BrandInfo } from './accountInfo';
+
 enum VoucherType {
   RATE = 'rate',
   AMOUNT = 'amount',
@@ -24,7 +26,7 @@ interface Voucher {
   duration: number;
   createdOn: string;
   updatedOn: string;
-  brandId: string;
+  brandInfo?: BrandInfo;
   usageMode: VoucherUsageMode;
 }
 

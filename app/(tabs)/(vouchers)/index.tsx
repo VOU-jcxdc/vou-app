@@ -36,12 +36,13 @@ export default function Vouchers() {
             const { voucher } = item;
             return (
               <VoucherCard
-                id={voucher.id}
+                id={item.id}
                 name={voucher.name}
                 description={voucher.description}
-                brandId={voucher.brandId}
+                code={voucher.code}
                 duration={voucher.duration}
                 assignedOn={item.assignedOn}
+                brandInfo={voucher.brandInfo}
                 usageMode={voucher.usageMode}
               />
             );
