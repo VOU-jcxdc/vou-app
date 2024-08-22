@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as FileSystem from 'expo-file-system';
 
 async function doPost(url: string, data: any) {
   const token = (await AsyncStorage.getItem('token')) || '';
@@ -67,14 +66,4 @@ async function doDelete(url: string) {
   return response.data;
 }
 
-async function doImageUpload(url: string, data: any) {
-  const response = await FileSystem.uploadAsync(url, data, {
-    fieldName: 'file',
-    httpMethod: 'PUT',
-    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-  });
-
-  return response;
-}
-
-export { doDelete, doGet, doImageUpload, doPatch, doPost, doPut };
+export { doDelete, doGet, doPatch, doPost, doPut };

@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -27,7 +26,7 @@ import { Button } from '~/components/ui/button';
 import UploadModal from '~/components/UploadModal';
 import { useRefreshByUser } from '~/hooks/useRefreshByUser';
 import { createPresignedUrl, createUploadPresignedUrl, fetchUser, updateUserProfile, uploadFile } from '~/lib/api/api';
-import { User } from '~/lib/interfaces/user';
+import { User } from '~/lib/interfaces';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -69,6 +68,7 @@ export default function EditProfile() {
     mutationFn: updateUserProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.removeQueries({ queryKey: ['file'] });
       alert('Profile updated');
       router.navigate('/(profile)');
     },
@@ -90,6 +90,7 @@ export default function EditProfile() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
+        base64: true,
       });
 
       if (!result.canceled) {
@@ -109,6 +110,7 @@ export default function EditProfile() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
+        base64: true,
       });
 
       if (!result.canceled) {
@@ -147,24 +149,21 @@ export default function EditProfile() {
       };
 
       if (image !== null && uploadImage !== null) {
-        const imageFormData = new FormData();
-        const uuid = (await AsyncStorage.getItem('uuid')) || '';
+        const response = await fetch(image);
+        const blob = await response.arrayBuffer();
 
-        imageFormData.append('image', {
-          uri: image,
-          type: 'image/jpeg',
-          file: uploadImage.assets[0],
-          filename: `profile-${uuid}.jpg`,
-        } as any);
-
-        if (!data.bucketId) {
-          const presignedUrl = await createPresignedUrl();
-          uploadFile({ file: image, url: presignedUrl.url, id: presignedUrl.id });
-          formData.bucketId = presignedUrl.id;
-        } else {
-          const presignedUrl = await createUploadPresignedUrl({ id: data.bucketId });
-          uploadFile({ file: image, url: presignedUrl.url, id: presignedUrl.id });
-          formData.bucketId = presignedUrl.id;
+        try {
+          if (!data.bucketId) {
+            const presignedUrl = await createPresignedUrl();
+            await uploadFile({ file: blob, url: presignedUrl.url, id: presignedUrl.id });
+            formData.bucketId = presignedUrl.id;
+          } else {
+            const presignedUrl = await createUploadPresignedUrl({ id: data.bucketId });
+            await uploadFile({ file: blob, url: presignedUrl.url, id: presignedUrl.id });
+            formData.bucketId = presignedUrl.id;
+          }
+        } catch (error) {
+          alert(error);
         }
       }
 

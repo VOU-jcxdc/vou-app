@@ -9,7 +9,7 @@ import { Button } from '~/components/ui/button';
 import { useAuth } from '~/context/AuthContext';
 import { useRefreshByUser } from '~/hooks/useRefreshByUser';
 import { fetchFile, fetchUser } from '~/lib/api/api';
-import { User } from '~/lib/interfaces/user';
+import { User } from '~/lib/interfaces';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 

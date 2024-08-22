@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryFunctionContext } from '@tanstack/react-query';
+import axios from 'axios';
 
 import { Event, EventsResponse, FavoriteEventsResponse, User } from '~/lib/interfaces';
-import { doDelete, doGet, doImageUpload, doPost, doPut } from '~/utils/APIRequest';
+import { doDelete, doGet, doPost, doPut } from '~/utils/APIRequest';
 
 import { PresignedUrl } from '../interfaces/image';
 
@@ -121,9 +122,21 @@ export async function createUploadPresignedUrl(params: { id: string }): Promise<
   return Promise.resolve(url as PresignedUrl);
 }
 
-export async function uploadFile(params: { file: string; url: string; id: string }) {
+export async function doImageUpload(url: string, data: ArrayBuffer) {
+  const response = await axios.put(url, data, {
+    headers: {
+      'Content-Type': 'image/jpeg',
+    },
+  });
+
+  return response;
+}
+
+export async function uploadFile(params: { file: ArrayBuffer; url: string; id: string }) {
   const { file, url, id } = params;
   const response = await doImageUpload(url, file);
+
+  console.log(response);
 
   if (response.status !== 200) {
     throw new Error('Upload failed');

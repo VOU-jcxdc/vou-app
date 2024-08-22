@@ -7,6 +7,7 @@ import { Skeleton } from '~/components/ui/skeleton';
 import { useInfiniteScroll } from '~/hooks/useInfiniteScroll';
 import { fetchEvents } from '~/lib/api/api';
 import { EventsResponse } from '~/lib/interfaces';
+import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 export default function Events() {
   const { data, isLoading, isRefreshing, onRefresh, onEndReached, isFetchingNextPage } =
@@ -28,21 +29,21 @@ export default function Events() {
     return null;
   }
 
-  // const currentEvents = data.filter((event) => {
-  //   const { isCurrent } = getEventDateInfo(event.beginDate, event.endDate);
-  //   return isCurrent;
-  // });
-  // const inComingEvents = data.filter((event) => {
-  //   const { isCurrent } = getEventDateInfo(event.beginDate, event.endDate);
-  //   return !isCurrent;
-  // });
+  const eventsData = data.reduce(
+    (acc, event) => {
+      const { isCurrent } = getEventDateInfo(event.beginDate, event.endDate);
+      acc[isCurrent ? 0 : 1].push(event);
+      return acc;
+    },
+    [[], []]
+  );
 
   return (
     <SafeAreaView className='m-6 h-full gap-4'>
       <View className='gap-4'>
         <Text className='text-xl font-bold'>Current Events</Text>
         <FlatList
-          data={data}
+          data={eventsData[0]}
           renderItem={({ item }) => (
             <Pressable
               onPress={() =>
@@ -74,7 +75,7 @@ export default function Events() {
       <View className='flex-1 gap-4'>
         <Text className='text-xl font-bold'>In-coming Events</Text>
         <FlatList
-          data={data}
+          data={eventsData[1]}
           renderItem={({ item }) => (
             <Pressable
               onPress={() =>
