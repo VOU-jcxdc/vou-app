@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import * as React from 'react';
 import { RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
-import { LoadingIndicator } from '~/components/LoadingIndicator';
 
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
 import { Button } from '~/components/ui/button';
 import { useAuth } from '~/context/AuthContext';
 import { useRefreshByUser } from '~/hooks/useRefreshByUser';
 import { fetchFile, fetchUser } from '~/lib/api/api';
-import { User } from '~/lib/interfaces/user';
+import { User } from '~/lib/interfaces';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -36,7 +36,7 @@ export default function Profile() {
   if (!data) return null;
 
   return (
-    <SafeAreaView className='h-full'>
+    <SafeAreaView className='h-full py-10'>
       <ScrollView
         refreshControl={<RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />}
         className='w-full'
@@ -44,7 +44,7 @@ export default function Profile() {
         <View className='w-full gap-6 justify-around items-center'>
           {data ? (
             <>
-              <View className='w-full items-center gap-6'>
+              <View className='w-full items-center gap-6 mb-6'>
                 <ProfileAvatar
                   uri={eventImage ? `${apiUrl}/files/${data.bucketId}` : 'https://picsum.photos/id/1/200/300'}
                   alt={data?.username || ''}

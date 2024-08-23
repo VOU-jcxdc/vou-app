@@ -27,10 +27,10 @@ async function doGet(url: string) {
   return response.data;
 }
 
-async function doPatch(url: string, data: any) {
+async function doPut(url: string, data: any) {
   const token = (await AsyncStorage.getItem('token')) || '';
 
-  const response = await axios.patch(url, data, {
+  const response = await axios.put(url, data, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: 'Bearer ' + token,
@@ -40,4 +40,27 @@ async function doPatch(url: string, data: any) {
   return response.data;
 }
 
-export { doGet, doPatch, doPost };
+async function doPutImage(url: string, data: ArrayBuffer) {
+  const response = await axios.put(url, data, {
+    headers: {
+      'Content-Type': 'image/jpeg',
+    },
+  });
+
+  return response;
+}
+
+async function doDelete(url: string) {
+  const token = (await AsyncStorage.getItem('token')) || '';
+
+  const response = await axios.delete(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+    },
+  });
+
+  return response.data;
+}
+
+export { doDelete, doGet, doPost, doPut, doPutImage };
