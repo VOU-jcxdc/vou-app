@@ -27,19 +27,6 @@ async function doGet(url: string) {
   return response.data;
 }
 
-async function doPatch(url: string, data: any) {
-  const token = (await AsyncStorage.getItem('token')) || '';
-
-  const response = await axios.patch(url, data, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + token,
-    },
-  });
-
-  return response.data;
-}
-
 async function doPut(url: string, data: any) {
   const token = (await AsyncStorage.getItem('token')) || '';
 
@@ -51,6 +38,16 @@ async function doPut(url: string, data: any) {
   });
 
   return response.data;
+}
+
+async function doPutImage(url: string, data: ArrayBuffer) {
+  const response = await axios.put(url, data, {
+    headers: {
+      'Content-Type': 'image/jpeg',
+    },
+  });
+
+  return response;
 }
 
 async function doDelete(url: string) {
@@ -66,4 +63,4 @@ async function doDelete(url: string) {
   return response.data;
 }
 
-export { doDelete, doGet, doPatch, doPost, doPut };
+export { doDelete, doGet, doPost, doPut, doPutImage };
