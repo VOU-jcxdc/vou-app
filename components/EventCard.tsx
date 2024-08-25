@@ -79,7 +79,7 @@ export default function EventCard({
             </CardFooter>
           </ImageBackground>
         ) : (
-          <View className='flex h-full w-full flex-row'>
+          <View className='flex h-full w-full flex-row items-center'>
             <View>
               <Image className='aspect-square h-full w-full rounded-l-lg object-cover' source={{ uri: imageUri }} />
             </View>

@@ -3,6 +3,7 @@ import '~/global.css';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme, ThemeProvider } from '@react-navigation/native';
+import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -57,6 +58,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <StatusBar style={'dark'} />
           <AuthStack />
+          <PortalHost />
         </QueryClientProvider>
       </ThemeProvider>
     </AuthProvider>

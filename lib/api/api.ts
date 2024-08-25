@@ -1,7 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryFunctionContext } from '@tanstack/react-query';
 
-import { Event, EventsResponse, FavoriteEventsResponse, User } from '~/lib/interfaces';
+import {
+  AccountsVouchersResponse,
+  Event,
+  EventsResponse,
+  EventsVouchersResponse,
+  FavoriteEventsResponse,
+  User,
+} from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
 import { PresignedUrl } from '../interfaces/image';
@@ -136,4 +143,38 @@ export async function uploadFile(params: { file: ArrayBuffer; url: string; id: s
   });
 
   return confirmation;
+}
+
+export async function fetchEventVouchers({
+  queryKey,
+}: QueryFunctionContext<string[]>): Promise<EventsVouchersResponse[]> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${id}/vouchers`);
+  const vouchers = response.data;
+
+  if (!vouchers) {
+    throw new Error("Event's vouchers not found");
+  }
+
+  return Promise.resolve(vouchers as EventsVouchersResponse[]);
+}
+
+export async function fetchAcountVouchers(): Promise<AccountsVouchersResponse[]> {
+  const response = await doGet(`${apiUrl}/users/vouchers`);
+  const vouchers = response.data;
+
+  if (!vouchers) {
+    throw new Error("User's vouchers not found");
+  }
+
+  return Promise.resolve(vouchers as AccountsVouchersResponse[]);
+}
+
+export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
+  const response = await doPut(`${apiUrl}/users/voucher/${id}/applying`, {
+    quantity: 1,
+  });
+
+  return Promise.resolve(response.data);
 }
