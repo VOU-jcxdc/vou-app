@@ -71,10 +71,6 @@ export default function FavoriteEventDetails() {
 
   const { beginDate, endDate, isCurrent } = getEventDateInfo(data.beginDate, data.endDate);
 
-  const handleShare = () => {
-    alert('Share event');
-  };
-
   const handleFavorite = () => {
     if (isFavorite) {
       removeFavoriteEventMutation.mutate({ eventId: data.id });
@@ -107,9 +103,6 @@ export default function FavoriteEventDetails() {
               </Text>
             </View>
             <View className='flex flex-row gap-2'>
-              <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleShare}>
-                <Ionicons name='share-social-outline' size={24} />
-              </Button>
               <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
                 <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} />
               </Button>

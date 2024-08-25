@@ -18,7 +18,7 @@ export const useInfiniteScroll = <F = object>({ key, fetcher }: Params<F>) => {
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, __, lastPageParam) => {
-      if (lastPage.events.length < lastPage.limit) {
+      if ((lastPage.events?.length ?? 0) < lastPage.limit) {
         return undefined;
       }
       return lastPageParam + 1;

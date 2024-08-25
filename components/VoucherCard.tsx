@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Image, ToastAndroid, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import Toast from 'react-native-toast-message';
 import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher } from '~/lib/interfaces';
 import { Button } from './ui/button';
@@ -50,7 +51,7 @@ export default function VoucherCard({
   const usedVoucherMutation = useMutation({
     mutationFn: updateUsedVoucher,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher', id as string] });
+      queryClient.invalidateQueries({ queryKey: ['account-vouchers', id as string] });
     },
   });
 
@@ -60,17 +61,22 @@ export default function VoucherCard({
 
   const copyToClipboard = () => {
     Clipboard.setString(code);
-    ToastAndroid.show('Đã sao chép mã', ToastAndroid.SHORT);
+    Toast.show({
+      type: 'success',
+      text1: 'Đã sao chép mã',
+      visibilityTime: 100,
+    });
   };
+
+  const imageUri = brandInfo
+    ? `${apiURl}/files/${brandInfo.bucketId}?${new Date().getTime()}`
+    : 'https://picsum.photos/id/1/200/300';
 
   return (
     <Card className='h-36'>
       <View className='flex-row gap-4 items-center'>
         <View className='h-36 w-36 bg-slate-50 flex items-center justify-center gap-2'>
-          <Image
-            className='rounded-full h-12 w-12'
-            source={{ uri: `${apiURl}/files/${brandInfo?.bucketId}` || 'https://picsum.photos/id/1/200/300' }}
-          />
+          <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
           <Text className='text-base font-semibold'>{brandInfo?.name || 'Brand name'}</Text>
         </View>
         <View className='flex-1'>
@@ -92,7 +98,7 @@ export default function VoucherCard({
                       <Image
                         className='rounded-full h-24 w-24'
                         source={{
-                          uri: `${apiURl}/files/${brandInfo?.bucketId}` || 'https://picsum.photos/id/1/200/300',
+                          uri: imageUri,
                         }}
                       />
                     </View>

@@ -1,7 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryFunctionContext } from '@tanstack/react-query';
 
-import { AccountsVouchersResponse, Event, EventsResponse, FavoriteEventsResponse, EventsVouchersResponse, User } from '~/lib/interfaces';
+import {
+  AccountsVouchersResponse,
+  Event,
+  EventsResponse,
+  EventsVouchersResponse,
+  FavoriteEventsResponse,
+  User,
+} from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
 import { PresignedUrl } from '../interfaces/image';
@@ -165,7 +172,6 @@ export async function fetchAcountVouchers(): Promise<AccountsVouchersResponse[]>
 }
 
 export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
-  console.log('updateUsedVoucher', `${apiUrl}/users/voucher/${id}/applying`);
   const response = await doPut(`${apiUrl}/users/voucher/${id}/applying`, {
     quantity: 1,
   });

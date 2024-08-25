@@ -1,18 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, View } from 'react-native';
-
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, SafeAreaView, View } from 'react-native';
 import EventCard from '~/components/EventCard';
+
 import { Skeleton } from '~/components/ui/skeleton';
-import { useRefreshByUser } from '~/hooks/useRefreshByUser';
+import { Text } from '~/components/ui/text';
+import { useInfiniteScroll } from '~/hooks/useInfiniteScroll';
 import { fetchFavoriteEvents } from '~/lib/api/api';
+import { FavoriteEventsResponse } from '~/lib/interfaces';
 
 export default function FavoriteEvents() {
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['favoriteEvents'],
-    queryFn: fetchFavoriteEvents,
-  });
-  const { isRefetchingByUser, refetchByUser } = useRefreshByUser(refetch);
+  const { data, isLoading, isRefreshing, onRefresh, onEndReached, isFetchingNextPage } =
+    useInfiniteScroll<FavoriteEventsResponse>({
+      key: 'favoriteEvents',
+      fetcher: fetchFavoriteEvents,
+    });
 
   if (isLoading) {
     return (
@@ -34,7 +35,7 @@ export default function FavoriteEvents() {
     <SafeAreaView className='m-6 h-full gap-4'>
       <View className='flex-1 gap-4'>
         <FlatList
-          data={data.favoriteEvents}
+          data={data}
           renderItem={({ item }) => (
             <Pressable
               onPress={() =>
@@ -55,11 +56,10 @@ export default function FavoriteEvents() {
           )}
           ItemSeparatorComponent={() => <View className='h-4' />}
           keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />}
-          // onEndReached={onEndReached}
-          // refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+          onEndReached={onEndReached}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={<Text>No events found</Text>}
-          // ListFooterComponent={<View>{isFetchingNextPage && <ActivityIndicator />}</View>}
+          ListFooterComponent={<View>{isFetchingNextPage && <ActivityIndicator />}</View>}
         />
       </View>
     </SafeAreaView>
