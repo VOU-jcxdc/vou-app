@@ -12,7 +12,6 @@ import { Platform } from 'react-native';
 import { AuthProvider } from '~/context/AuthContext';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
-
 const LIGHT_THEME: Theme = {
   dark: false,
   colors: NAV_THEME.light,
