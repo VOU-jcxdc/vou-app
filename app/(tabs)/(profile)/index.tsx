@@ -1,41 +1,69 @@
+import { useQuery } from '@tanstack/react-query';
 import * as React from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 import ProfileAvatar from '~/components/ProfileAvatar';
 import ProfileInput from '~/components/ProfileInput';
 import { Button } from '~/components/ui/button';
+import { useAuth } from '~/context/AuthContext';
+import { useRefreshByUser } from '~/hooks/useRefreshByUser';
+import { fetchFile, fetchUser } from '~/lib/api/api';
+import { User } from '~/lib/interfaces';
 
-const user = {
-  userName: 'minen1712',
-  fullName: 'Trần Minh Anh',
-  phone: '0123456789',
-  email: 'tranminhanh1912@gmail.com',
-  image: 'https://picsum.photos/id/1/200/300',
-};
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function Profile() {
+  const { clearAuthInfo } = useAuth();
+  const { isPending, data, refetch } = useQuery<Pick<User, 'bucketId' | 'email' | 'phone' | 'username'>, Error>({
+    queryKey: ['user'],
+    queryFn: fetchUser,
+  });
+  const { isRefetchingByUser, refetchByUser } = useRefreshByUser(refetch);
+
   const handleSignOut = () => {
-    alert('Sign out');
+    clearAuthInfo();
   };
 
+  const { data: eventImage, isLoading } = useQuery({
+    queryKey: ['file', data?.bucketId || ''],
+    queryFn: fetchFile,
+    enabled: !!data?.bucketId, // Only run this query if data.bucketId is available
+  });
+
+  if (isPending || isLoading) return <LoadingIndicator />;
+
+  if (!data) return null;
+
   return (
-    <SafeAreaView className='h-full justify-around items-center'>
-      <View className='w-full gap-6'>
-        <View className='w-full items-center gap-6'>
-          <ProfileAvatar uri={user?.image} alt={user?.userName} />
-          <Text className='text-3xl font-semibold'>{user?.fullName}</Text>
+    <SafeAreaView className='h-full py-10'>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />}
+        className='w-full'
+        contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View className='w-full gap-6 justify-around items-center'>
+          {data ? (
+            <>
+              <View className='w-full items-center gap-6 mb-6'>
+                <ProfileAvatar
+                  uri={eventImage ? `${apiUrl}/files/${data.bucketId}` : 'https://picsum.photos/id/1/200/300'}
+                  alt={data?.username || ''}
+                />
+                <Text className='text-3xl font-semibold'>{data?.username}</Text>
+              </View>
+              <View className='w-full px-10 gap-6'>
+                <ProfileInput label='Username' value={data?.username} readOnly={true} />
+                <ProfileInput label='Phone' value={data?.phone} readOnly={true} />
+                <ProfileInput label='Email' value={data?.email} readOnly={true} />
+              </View>
+            </>
+          ) : null}
         </View>
-        <View className='w-full px-10 gap-6'>
-          <ProfileInput label='Username' value={user?.userName} readOnly={true} />
-          <ProfileInput label='Full Name' value={user?.fullName} readOnly={true} />
-          <ProfileInput label='Phone' value={user?.phone} readOnly={true} />
-          <ProfileInput label='Email' value={user?.email} readOnly={true} />
-        </View>
-      </View>
+      </ScrollView>
 
       <View className='w-full px-10'>
-        <Button className='bg-purple-500 rounded' onPress={handleSignOut}>
-          <Text className='text-white font-bold'>Sign Out</Text>
+        <Button className='rounded bg-primary' onPress={handleSignOut}>
+          <Text className='font-bold text-primary-foreground'>Sign Out</Text>
         </Button>
       </View>
     </SafeAreaView>
