@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies without updating lockfile
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate 'android' and 'ios' folder
         run: npx expo prebuild
