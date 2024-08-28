@@ -24,6 +24,18 @@ jobs:
       - name: Install dependencies without updating lockfile
         run: npm ci --legacy-peer-deps
 
+      - name: Write 'google-services.json'
+        run: |
+          cat << EOF > ./google-services.json
+          ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EOF
+
+      - name: Write 'GoogleService-Info.plist'
+        run: |
+          cat << EOF > ./GoogleService-Info.plist
+          ${{ secrets.GOOGLESERVICE_INFO_PLIST }}
+          EOF
+
       - name: Generate 'android' and 'ios' folder
         run: npx expo prebuild
 
