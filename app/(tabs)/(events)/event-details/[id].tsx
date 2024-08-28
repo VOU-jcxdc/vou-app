@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, Text, View } from 'react-native';
 
@@ -161,7 +161,14 @@ export default function EventDetails() {
         ItemSeparatorComponent={() => <View className='h-4' />}
         ListFooterComponent={
           <View className='w-full px-4 py-4'>
-            <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
+            <Button
+              className='rounded bg-primary'
+              onPress={() => {
+                router.push({
+                  pathname: '/(shake-game)',
+                  params: { id: data.id },
+                });
+              }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
           </View>

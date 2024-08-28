@@ -132,8 +132,6 @@ export async function uploadFile(params: { file: ArrayBuffer; url: string; id: s
   const { file, url, id } = params;
   const response = await doPutImage(url, file);
 
-  console.log(response);
-
   if (response.status !== 200) {
     throw new Error('Upload failed');
   }
