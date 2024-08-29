@@ -21,8 +21,15 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Uninstall 'expo-dev-client'
+        run: npm uninstall expo-dev-client
+
+      - name: Remove 'expo-dev-client' from /app/_layout.tsx
+        run: |
+          sed -i '/expo-dev-client/d' ./app/_layout.tsx
+          
       - name: Install dependencies without updating lockfile
-        run: npm ci --legacy-peer-deps
+        run: npm ci 
 
       - name: Write 'google-services.json'
         run: |
@@ -30,28 +37,23 @@ jobs:
           ${{ secrets.GOOGLE_SERVICES_JSON }}
           EOF
 
-      - name: Write 'GoogleService-Info.plist'
+      - name: Write .env file
         run: |
-          cat << EOF > ./GoogleService-Info.plist
-          ${{ secrets.GOOGLESERVICE_INFO_PLIST }}
+          cat << EOF > .env
+          ${{ secrets.ENV }}
           EOF
 
-      - name: Generate 'android' and 'ios' folder
-        run: npx expo prebuild
+      - name: Generate 'android' folder
+        run: npx expo prebuild --platform android
 
       - name: Set up Java SDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '22'
-
-      - name: Set up gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.8
+          java-version: '21'
 
       - name: Build APK
-        run: gradle build
+        run: ./gradlew build
         working-directory: android
 
       - name: Sign APK
@@ -99,7 +101,7 @@ jobs:
         with:
           repo_token: ${{ secrets.SECRET_TOKEN }}
           file: android/app/build/outputs/apk/release/app-release-signed.apk
-          asset_name: Demo.apk
+          asset_name: vou.apk
           tag: ${{ steps.get-version.outputs.version }}
           overwrite: true
           body: '${{ steps.body-messages.outputs.BODY }}'
