@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies without updating lockfile
-        run: npm ci --legacy-peer-deps
+        run: npm ci 
 
       - name: Write 'google-services.json'
         run: |
@@ -30,14 +30,14 @@ jobs:
           ${{ secrets.GOOGLE_SERVICES_JSON }}
           EOF
 
-      - name: Write 'GoogleService-Info.plist'
+      - name: Write .env file
         run: |
-          cat << EOF > ./GoogleService-Info.plist
-          ${{ secrets.GOOGLESERVICE_INFO_PLIST }}
+          cat << EOF > .env
+          ${{ secrets.ENV }}
           EOF
 
-      - name: Generate 'android' and 'ios' folder
-        run: npx expo prebuild
+      - name: Generate 'android' folder
+        run: npx expo prebuild --platform android
 
       - name: Set up Java SDK
         uses: actions/setup-java@v4
