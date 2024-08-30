@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import React, { useEffect } from 'react';
@@ -7,22 +8,20 @@ import ShakeItemModal from '~/components/ShakeItemModal';
 
 const defaultConfig = 10;
 
-export default function ShakeGame() {
-  // const { data, isLoading } = useQuery({
-  //   queryKey: ['items'],
-  //   queryFn: fetchItems,
-  // });
+export async function fetchItem(): Promise<ItemTemp> {
+  const id = Math.floor(Math.random() * 5) + 1;
 
+  const response = await fetch(`https://66a253fa967c89168f1fa708.mockapi.io/items/${id}`);
+  const data = await response.json();
+
+  return Promise.resolve(data as ItemTemp);
+}
+
+export default function ShakeGame() {
+  const queryClient = useQueryClient();
   const [config, setConfig] = React.useState<number>(defaultConfig);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
-
-  // if (isLoading) {
-  //   return (
-  //     <View className='aspect-video h-auto w-full items-center'>
-  //       <Skeleton className='h-screen w-screen' />
-  //     </View>
-  //   );
-  // }
+  const [item, setItem] = React.useState<ItemTemp | null>(null);
 
   useEffect(() => {
     if (!modalVisible && config > 0) {
@@ -33,14 +32,19 @@ export default function ShakeGame() {
     };
   }, [modalVisible, config]);
 
-  const onDeviceMotionChange = (event: any) => {
+  const onDeviceMotionChange = async (event: any) => {
     const acceleration = event.accelerationIncludingGravity;
     const g = 9.81;
     const x = acceleration.x / g;
     const y = acceleration.y / g;
     const z = acceleration.z / g;
     const total = Math.sqrt(x * x + y * y + z * z);
-    if (total > 5) {
+    if (total > 3) {
+      const data = await queryClient.fetchQuery({
+        queryKey: ['items'],
+        queryFn: fetchItem,
+      });
+      setItem(data);
       setModalVisible(true);
       Vibration.vibrate();
     }
@@ -74,9 +78,9 @@ export default function ShakeGame() {
           setModalVisible(false);
           setConfig(config - 1);
         }}
-        id={1}
-        name='Flower'
-        image=''
+        id={item?.id || 1}
+        name={item?.name || 'Item'}
+        image={item?.image || 'https://picsum.photos/id/106/200/300'}
       />
     </SafeAreaView>
   );

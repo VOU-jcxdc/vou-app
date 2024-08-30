@@ -31,7 +31,7 @@ export default function ShakeItemModal({
         {!isLoading && (
           <View className='w-full items-center justify-center gap-6 rounded-3xl bg-white px-5 py-10 border'>
             <Text className='text-2xl font-semibold'>You win an item!</Text>
-            <Image className='w-40 h-40' source={{ uri: 'https://picsum.photos/id/106/200/300' }} />
+            <Image className='w-40 h-40' source={{ uri: image }} />
             <Text className='text-xl font-semibold'>{name}</Text>
 
             <View className='w-full px-5'>
