@@ -48,7 +48,7 @@ jobs:
 
       - name: Allow HTTP requests in AndroidManifest.xml
         run: |
-          sed -i 's|<activity android:name=".MainActivity"|<activity android:name=".MainActivity" android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application android:name=".MainActivity"|<application android:name=".MainActivity" android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
 
       - name: Set up Java SDK
         uses: actions/setup-java@v4
