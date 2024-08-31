@@ -46,6 +46,10 @@ jobs:
       - name: Generate 'android' folder
         run: npx expo prebuild --platform android
 
+      - name: Allow HTTP requests in AndroidManifest.xml
+        run: |
+          sed -i 's|<activity android:name=".MainActivity"|<activity android:name=".MainActivity" android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+
       - name: Set up Java SDK
         uses: actions/setup-java@v4
         with:
@@ -53,7 +57,7 @@ jobs:
           java-version: '21'
 
       - name: Build APK
-        run: ./gradlew build
+        run: ./gradlew assembleRelease
         working-directory: android
 
       - name: Sign APK
