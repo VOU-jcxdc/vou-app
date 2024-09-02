@@ -27,9 +27,9 @@ jobs:
       - name: Remove 'expo-dev-client' from /app/_layout.tsx
         run: |
           sed -i '/expo-dev-client/d' ./app/_layout.tsx
-          
+
       - name: Install dependencies without updating lockfile
-        run: npm ci 
+        run: npm ci
 
       - name: Write 'google-services.json'
         run: |

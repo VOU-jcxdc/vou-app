@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -33,7 +34,11 @@ export default function EventDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['favoriteEvents'] });
-      alert('Add to favorite');
+      Toast.show({
+        type: 'success',
+        text1: 'Add to favorite',
+        visibilityTime: 1000,
+      });
       setIsFavorite(true);
     },
     onError: (error) => {
@@ -46,7 +51,11 @@ export default function EventDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['favoriteEvents'] });
-      alert('Remove from favorite');
+      Toast.show({
+        type: 'success',
+        text1: 'Remove from favorite',
+        visibilityTime: 1000,
+      });
       setIsFavorite(false);
     },
     onError: (error) => {
@@ -76,7 +85,10 @@ export default function EventDetails() {
     );
   }
 
-  const { beginDate, endDate, isCurrent } = getEventDateInfo(data.beginDate, data.endDate);
+  const { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent } = getEventDateInfo(
+    data.beginDate,
+    data.endDate
+  );
 
   const handleFavorite = () => {
     if (isFavorite) {
@@ -103,7 +115,7 @@ export default function EventDetails() {
               <View className='flex flex-row items-center justify-between'>
                 <View className='gap-2'>
                   <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
-                    <Text className={isCurrent ? 'text-green-600' : 'text-primary'}>
+                    <Text className={isCurrent ? 'text-green-600' : 'text-secondary-foreground'}>
                       {isCurrent ? 'Happening event' : 'In-coming event'}
                     </Text>
                   </Badge>
@@ -113,7 +125,11 @@ export default function EventDetails() {
                 </View>
                 <View className='flex flex-row gap-2'>
                   <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
-                    <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} />
+                    <Ionicons
+                      name={isFavorite ? 'heart' : 'heart-outline'}
+                      size={24}
+                      color={isFavorite ? 'red' : 'black'}
+                    />
                   </Button>
                 </View>
               </View>
@@ -124,12 +140,8 @@ export default function EventDetails() {
               <View className='gap-2'>
                 <Text className='text-xl font-bold'>Event Time</Text>
                 <Text>
-                  From {beginDate} to {endDate}
+                  From {beginTimestamp + ' ' + beginDate} to {endTimestamp + ' ' + endDate}
                 </Text>
-              </View>
-              <View className='gap-2'>
-                <Text className='text-xl font-bold'>Instruction</Text>
-                <Text>{data?.description}</Text>
               </View>
               {eventVouchers && eventVouchers.length > 0 && (
                 <View className='gap-2'>
@@ -153,6 +165,7 @@ export default function EventDetails() {
                 duration={voucher.duration}
                 usageMode={voucher.usageMode}
                 isAssigned={false}
+                quantity={item.quantity}
               />
             </View>
           );
@@ -161,12 +174,20 @@ export default function EventDetails() {
         ItemSeparatorComponent={() => <View className='h-4' />}
         ListFooterComponent={
           <View className='w-full px-4 py-4'>
-            <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
+            <Button
+              className='rounded bg-primary'
+              onPress={() => {
+                router.push({
+                  pathname: '/(shake-game)',
+                  params: { eventId: id },
+                });
+              }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
           </View>
         }
       />
+      <Toast />
     </View>
   );
 }

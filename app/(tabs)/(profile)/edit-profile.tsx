@@ -16,6 +16,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 
 import { ErrorMessage } from '~/components/ErrorMessage';
@@ -69,7 +70,11 @@ export default function EditProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.removeQueries({ queryKey: ['file'] });
-      alert('Profile updated');
+      Toast.show({
+        type: 'success',
+        text1: 'Profile updated',
+        visibilityTime: 1000,
+      });
       router.navigate('/(profile)');
     },
     onError: (error) => {
