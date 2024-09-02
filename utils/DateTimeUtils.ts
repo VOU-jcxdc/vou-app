@@ -22,11 +22,21 @@ export const isDateAvailable = (begin: Date, end: Date) => {
   return today >= begin && today <= end;
 };
 
+export const getTimestamp = (date: Date) => {
+  const hours = date.getHours() > 10 ? date.getHours() : `0${date.getHours()}`;
+  const minutes = date.getMinutes() > 10 ? date.getMinutes() : `0${date.getMinutes()}`;
+  return `${hours}:${minutes}`;
+};
+
 export const getEventDateInfo = (begin: Date, end: Date) => {
   const beginDate = new Date(begin).toLocaleDateString();
   const endDate = new Date(end).toLocaleDateString();
-  const isCurrent = isDateAvailable(begin, end);
-  return { beginDate, endDate, isCurrent };
+
+  const beginTimestamp = getTimestamp(new Date(begin));
+  const endTimestamp = getTimestamp(new Date(end));
+
+  const isCurrent = isDateAvailable(new Date(begin), new Date(end));
+  return { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent };
 };
 
 export const dateRegex = /^\d{4}-\d{2}-\d{2}$/;

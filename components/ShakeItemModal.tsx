@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
 
 export type ItemProps = {
-  id: number;
+  id: string;
   name: string;
   image: string;
 };

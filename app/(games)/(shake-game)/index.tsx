@@ -1,27 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import React, { useEffect } from 'react';
 import { Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
 import ShakeItemModal from '~/components/ShakeItemModal';
+import { fetchItem } from '~/lib/api/api';
+import { Item } from '~/lib/interfaces';
 
 const defaultConfig = 10;
-
-export async function fetchItem(): Promise<ItemTemp> {
-  const id = Math.floor(Math.random() * 5) + 1;
-
-  const response = await fetch(`https://66a253fa967c89168f1fa708.mockapi.io/items/${id}`);
-  const data = await response.json();
-
-  return Promise.resolve(data as ItemTemp);
-}
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ShakeGame() {
   const queryClient = useQueryClient();
+  const { eventId } = useLocalSearchParams();
   const [config, setConfig] = React.useState<number>(defaultConfig);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
-  const [item, setItem] = React.useState<ItemTemp | null>(null);
+  const [item, setItem] = React.useState<Item | null>(null);
 
   useEffect(() => {
     if (!modalVisible && config > 0) {
@@ -41,7 +36,7 @@ export default function ShakeGame() {
     const total = Math.sqrt(x * x + y * y + z * z);
     if (total > 3) {
       const data = await queryClient.fetchQuery({
-        queryKey: ['items'],
+        queryKey: ['items', eventId as string],
         queryFn: fetchItem,
       });
       setItem(data);
@@ -62,11 +57,11 @@ export default function ShakeGame() {
         <View className='grow' />
 
         <Pressable
-          className='bg-black rounded-full p-5'
+          className='bg-primary rounded-full p-5'
           onPress={() =>
             router.push({
-              pathname: `/inventory`,
-              params: { id: 1 },
+              pathname: '/inventory',
+              params: { eventId },
             })
           }>
           <Ionicons name='gift-outline' size={64} color='white' />
@@ -78,9 +73,9 @@ export default function ShakeGame() {
           setModalVisible(false);
           setConfig(config - 1);
         }}
-        id={item?.id || 1}
+        id={item?.id || ''}
         name={item?.name || 'Item'}
-        image={item?.image || 'https://picsum.photos/id/106/200/300'}
+        image={`${apiUrl}/files/${item?.imageId}` || 'https://picsum.photos/id/106/200/300'}
       />
     </SafeAreaView>
   );

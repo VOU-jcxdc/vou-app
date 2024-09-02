@@ -64,7 +64,7 @@ export default function VoucherCard({
     Toast.show({
       type: 'success',
       text1: 'Đã sao chép mã',
-      visibilityTime: 100,
+      visibilityTime: 1000,
     });
   };
 

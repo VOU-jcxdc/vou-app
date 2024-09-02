@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 
@@ -17,7 +16,7 @@ if (!fs.existsSync(envFilePath)) {
 const envVars = {};
 fs.readFileSync(envFilePath, 'utf8')
   .split('\n')
-  .forEach(line => {
+  .forEach((line) => {
     const [key, value] = line.split('=');
     if (key && value) {
       envVars[key.trim()] = value.trim();
@@ -28,7 +27,7 @@ fs.readFileSync(envFilePath, 'utf8')
 function getAllFiles(dirPath, arrayOfFiles = []) {
   const files = fs.readdirSync(dirPath);
 
-  files.forEach(file => {
+  files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
       arrayOfFiles = getAllFiles(filePath, arrayOfFiles);
@@ -63,7 +62,7 @@ function replaceEnvUsage(filePath) {
 function main() {
   const allFiles = getAllFiles(directory);
 
-  allFiles.forEach(filePath => {
+  allFiles.forEach((filePath) => {
     if (fs.readFileSync(filePath, 'utf8').includes('process.env')) {
       replaceEnvUsage(filePath);
     }

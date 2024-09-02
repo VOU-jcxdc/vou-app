@@ -7,6 +7,7 @@ import {
   EventsResponse,
   EventsVouchersResponse,
   FavoriteEventsResponse,
+  Item,
   User,
 } from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
@@ -175,4 +176,17 @@ export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
   });
 
   return Promise.resolve(response.data);
+}
+
+export async function fetchItem({ queryKey }: QueryFunctionContext<string[]>): Promise<Item> {
+  const [, eventId] = queryKey;
+
+  const response = await doPost(`${apiUrl}/events/${eventId}/items/assigning`, {});
+  const item = response.data.item;
+
+  if (!item) {
+    throw new Error('Item not found');
+  }
+
+  return Promise.resolve(item as Item);
 }
