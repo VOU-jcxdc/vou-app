@@ -42,8 +42,7 @@ const DialogOverlayNative = React.forwardRef<
       style={StyleSheet.absoluteFill}
       className={cn('z-50 flex bg-black/80 justify-center items-center p-2', className)}
       {...props}
-      ref={ref}
-    >
+      ref={ref}>
       <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
         <>{children}</>
       </Animated.View>
@@ -70,19 +69,15 @@ const DialogContent = React.forwardRef<
           ref={ref}
           className={cn(
             'z-50 max-w-lg gap-4 border border-border web:cursor-default bg-background p-6 shadow-lg web:duration-200 rounded-lg',
-            open
-              ? 'web:animate-in web:fade-in-0 web:zoom-in-95'
-              : 'web:animate-out web:fade-out-0 web:zoom-out-95',
+            open ? 'web:animate-in web:fade-in-0 web:zoom-in-95' : 'web:animate-out web:fade-out-0 web:zoom-out-95',
             className
           )}
-          {...props}
-        >
+          {...props}>
           {children}
           <DialogPrimitive.Close
             className={
               'absolute right-4 top-4 p-0.5 web:group rounded-sm opacity-70 web:ring-offset-background web:transition-opacity web:hover:opacity-100 web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 web:disabled:pointer-events-none'
-            }
-          >
+            }>
             <X
               size={Platform.OS === 'web' ? 16 : 18}
               className={cn('text-muted-foreground', open && 'text-accent-foreground')}
@@ -101,10 +96,7 @@ const DialogHeader = ({ className, ...props }: React.ComponentPropsWithoutRef<ty
 DialogHeader.displayName = 'DialogHeader';
 
 const DialogFooter = ({ className, ...props }: React.ComponentPropsWithoutRef<typeof View>) => (
-  <View
-    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end gap-2', className)}
-    {...props}
-  />
+  <View className={cn('flex flex-col-reverse sm:flex-row sm:justify-end gap-2', className)} {...props} />
 );
 DialogFooter.displayName = 'DialogFooter';
 
@@ -114,10 +106,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      'text-lg native:text-xl text-foreground font-semibold leading-none tracking-tight',
-      className
-    )}
+    className={cn('text-lg native:text-xl text-foreground font-semibold leading-none tracking-tight', className)}
     {...props}
   />
 ));

@@ -7,6 +7,7 @@ import {
   EventsResponse,
   EventsVouchersResponse,
   FavoriteEventsResponse,
+  Item,
   User,
 } from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
@@ -134,8 +135,6 @@ export async function uploadFile(params: { file: ArrayBuffer; url: string; id: s
   const { file, url, id } = params;
   const response = await doPutImage(url, file);
 
-  console.log(response);
-
   if (response.status !== 200) {
     throw new Error('Upload failed');
   }
@@ -181,6 +180,19 @@ export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
   return Promise.resolve(response.data);
 }
 
+export async function fetchItem({ queryKey }: QueryFunctionContext<string[]>): Promise<Item> {
+  const [, eventId] = queryKey;
+
+  const response = await doPost(`${apiUrl}/events/${eventId}/items/assigning`, {});
+  const item = response.data.item;
+
+  if (!item) {
+    throw new Error('Item not found');
+  }
+
+  return Promise.resolve(item as Item);
+}
+
 export async function upsertFcmToken(params: { fcmToken: string }) {
   try {
     const { fcmToken } = params;
@@ -202,6 +214,19 @@ export async function fetchAccountItems(): Promise<AccountItemsResponse[]> {
   }
 
   return Promise.resolve(items as AccountItemsResponse[]);
+}
+
+export async function fetchEventItems({ queryKey }: QueryFunctionContext<string[]>): Promise<Item[]> {
+  const [, eventId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/items`);
+  const items = response.data;
+
+  if (!items) {
+    throw new Error("User's items not found");
+  }
+
+  return Promise.resolve(items as Item[]);
 }
 
 export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string[]>): Promise<Recipe[]> {

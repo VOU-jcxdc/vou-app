@@ -108,6 +108,7 @@ const AuthStack = () => {
       <Stack.Screen redirect name='index' />
       <Stack.Screen name='(auth)' options={{ headerShown: false }} />
       <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+      <Stack.Screen name='(games)' options={{ headerShown: false }} />
       <Stack.Screen name='+not-found' />
     </Stack>
   );
