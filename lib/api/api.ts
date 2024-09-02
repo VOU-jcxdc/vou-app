@@ -178,3 +178,15 @@ export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
 
   return Promise.resolve(response.data);
 }
+
+export async function upsertFcmToken(params: { fcmToken: string }) {
+  try {
+    const { fcmToken } = params;
+    const response = await doPost(`${apiUrl}/notifications/fcm-token`, { token: fcmToken });
+
+    return response;
+  } catch (error) {
+    console.error('Error upserting FCM token:', error);
+    throw new Error('Error upserting FCM token');
+  }
+}
