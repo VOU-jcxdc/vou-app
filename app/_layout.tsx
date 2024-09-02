@@ -13,6 +13,9 @@ import { AuthProvider } from '~/context/AuthContext';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 
+import messaging from '@react-native-firebase/messaging';
+import useNotificationStore from '~/stores/notification';
+import { handleNotification } from '~/utils/notificationUtils';
 const LIGHT_THEME: Theme = {
   dark: false,
   colors: NAV_THEME.light,
@@ -26,7 +29,10 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const { colorScheme, setColorScheme } = useColorScheme();
+  const { isGranted, topics } = useNotificationStore();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
+
+  messaging().setBackgroundMessageHandler(async () => {});
 
   React.useEffect(() => {
     (async () => {
@@ -46,6 +52,38 @@ export default function RootLayout() {
       }
     })();
   }, [colorScheme, setColorScheme]);
+
+  React.useEffect(() => {
+    const notificationListener = async () => {
+      if (isGranted) {
+        topics.forEach((topic) => {
+          messaging().subscribeToTopic(topic);
+        });
+
+        messaging().onMessage((remoteMessage): void => {
+          handleNotification(remoteMessage, topics);
+        });
+
+        messaging().onNotificationOpenedApp((remoteMessage): void => {
+          handleNotification(remoteMessage, topics);
+        });
+
+        messaging()
+          .getInitialNotification()
+          .then((remoteMessage): void => {
+            if (remoteMessage) {
+              handleNotification(remoteMessage, topics);
+            }
+          });
+      } else {
+        topics.forEach((topic) => {
+          messaging().unsubscribeFromTopic(topic);
+        });
+      }
+    };
+
+    notificationListener();
+  }, [isGranted]);
 
   if (!isColorSchemeLoaded) {
     return null;

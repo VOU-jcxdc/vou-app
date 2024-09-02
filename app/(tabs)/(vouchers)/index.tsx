@@ -6,7 +6,7 @@ import VoucherCard from '~/components/VoucherCard';
 import { fetchAcountVouchers } from '~/lib/api/api';
 
 export default function Vouchers() {
-  const { data, isPending } = useQuery({
+  const { data, isPending, refetch } = useQuery({
     queryKey: ['account-vouchers'],
     queryFn: fetchAcountVouchers,
   });
@@ -22,7 +22,7 @@ export default function Vouchers() {
   if (data.length === 0) {
     return (
       <View className='flex-1 justify-center items-center'>
-        <Text>Tài khoản chưa có voucher nào</Text>
+        <Text className='text-2xl'>You currently have no vouchers</Text>
       </View>
     );
   }
@@ -42,8 +42,10 @@ export default function Vouchers() {
                 code={voucher.code}
                 duration={voucher.duration}
                 assignedOn={item.assignedOn}
+                quantity={item.quantity}
                 brandInfo={voucher.brandInfo}
                 usageMode={voucher.usageMode}
+                onVoucherUsed={refetch}
               />
             );
           }}

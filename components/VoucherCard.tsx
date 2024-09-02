@@ -1,22 +1,33 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Image, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Toast from 'react-native-toast-message';
 import { updateUsedVoucher } from '~/lib/api/api';
-import { AccountsVouchers, Voucher } from '~/lib/interfaces';
+import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
+import { cn } from '~/lib/utils';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger } from './ui/dialog';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from './ui/dialog';
 import { Text } from './ui/text';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
-  Partial<Pick<AccountsVouchers, 'assignedOn'>> & {
+  Partial<Pick<AccountsVouchers, 'assignedOn' | 'quantity'>> & {
     isAssigned?: boolean;
     brandInfo?: { name: string; bucketId: string };
+    onVoucherUsed?: () => void;
   };
 
 function DurationText({ assigned_on, duration }: { assigned_on: string; duration: number }) {
@@ -28,10 +39,12 @@ function DurationText({ assigned_on, duration }: { assigned_on: string; duration
   const diffDays = Math.floor(diff / 86400000);
   if (diff > 0) {
     if (diffDays > 5) {
-      return <Text className='font-medium text-sm'>{'HSD: ' + date.toLocaleDateString()}</Text>;
+      return <Text className='font-medium text-sm'>{'EXP: ' + date.toLocaleDateString()}</Text>;
     } else
       return (
-        <Text className='text-destructive'>{diffHours > 24 ? `Còn ${diffDays} ngày` : `Còn ${diffHours} giờ`} </Text>
+        <Text className='text-destructive'>
+          {diffHours > 24 ? `${diffDays} days left` : `${diffHours} hours left`}{' '}
+        </Text>
       );
   }
 }
@@ -44,33 +57,64 @@ export default function VoucherCard({
   brandInfo,
   duration,
   assignedOn,
+  quantity,
   usageMode,
   isAssigned = true,
+  onVoucherUsed,
 }: VoucherCardProps) {
   const queryClient = useQueryClient();
   const usedVoucherMutation = useMutation({
     mutationFn: updateUsedVoucher,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account-vouchers', id as string] });
+      Toast.show({
+        type: 'success',
+        text1: 'Voucher used successfully',
+        visibilityTime: 100,
+      });
     },
   });
+  const [open, setOpen] = useState(false);
+  const [openSuccess, setOpenSuccess] = useState(false);
+
+  function SuccessDialog() {
+    return (
+      <Dialog open={openSuccess} onOpenChange={setOpenSuccess}>
+        <DialogContent className='w-96'>
+          <View className='flex gap-5 items-center'>
+            <View className=' flex items-center justify-center gap-2'>
+              <Image
+                className='rounded-full h-24 w-24'
+                source={{
+                  uri: 'https://cdn.vectorstock.com/i/500p/14/99/green-tick-marker-checkmark-circle-icon-vector-22691499.jpg',
+                }}
+              />
+            </View>
+            <View className='flex items-center'>
+              <Text className='text-base'>Sử dùng voucher thành công</Text>
+            </View>
+          </View>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
+    onVoucherUsed?.();
+    setOpenSuccess(true);
   };
 
   const copyToClipboard = () => {
     Clipboard.setString(code);
-    Toast.show({
-      type: 'success',
-      text1: 'Đã sao chép mã',
-      visibilityTime: 1000,
-    });
   };
 
-  const imageUri = brandInfo
-    ? `${apiURl}/files/${brandInfo.bucketId}?${new Date().getTime()}`
-    : 'https://picsum.photos/id/1/200/300';
+  const imageUri =
+    brandInfo && brandInfo.bucketId
+      ? `${apiURl}/files/${brandInfo.bucketId}?${new Date().getTime()}`
+      : 'https://picsum.photos/id/1/200/300';
+
+  const usageModeTextClsName = cn('bg-secondary px-3 py-1 rounded-2xl self-center text-sm', !isAssigned && 'mt-2');
 
   return (
     <Card className='h-36'>
@@ -80,12 +124,17 @@ export default function VoucherCard({
           <Text className='text-base font-semibold'>{brandInfo?.name || 'Brand name'}</Text>
         </View>
         <View className='flex-1'>
-          <Text className='text-xl font-bold'>{name}</Text>
+          <View className='flex flex-row justify-between'>
+            <Text className='text-xl font-bold'>{name}</Text>
+            {quantity && <Text className='bg-slate-800 font-medium color-white px-2'>x{quantity}</Text>}
+          </View>
           <Text className='text-base'>{description}</Text>
           {assignedOn && <DurationText assigned_on={assignedOn} duration={duration} />}
+          {!isAssigned && quantity == 0 && <Text className='text-secondary'>Ưu đãi đã hết</Text>}
           <View className='flex flex-row justify-between'>
-            <Text className='bg-secondary px-3 py-1 rounded-2xl self-center text-sm'>{usageMode}</Text>
-            {isAssigned && (
+            <Text className={usageModeTextClsName}>{usageMode}</Text>
+
+            {isAssigned && usageMode == VoucherUsageMode.OFFLINE ? (
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant='ghost'>
@@ -124,10 +173,51 @@ export default function VoucherCard({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+            ) : (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button variant='ghost'>
+                    <Text className='text-primary font-medium'>Đổi quà</Text>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className='w-96'>
+                  <DialogHeader>
+                    <DialogDescription>
+                      Quà chỉ thực hiện đổi 1 lần, vui lòng copy mã quà để sử dụng sau
+                    </DialogDescription>
+                  </DialogHeader>
+                  <View className='flex gap-5 items-center'>
+                    <View className=' flex items-center justify-center gap-2'>
+                      <Image
+                        className='rounded-full h-24 w-24'
+                        source={{
+                          uri: 'https://seeklogo.com/images/G/grab-logo-7020E74857-seeklogo.com.png',
+                        }}
+                      />
+                    </View>
+                    <View className='flex items-center'>
+                      <Text className='text-base'>Grab</Text>
+                      <View className='flex flex-row items-center gap-2'>
+                        <Text className='text-lg font-medium'>{code}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            copyToClipboard();
+                            handleDone();
+                            setOpen(false);
+                            setOpenSuccess(true);
+                          }}>
+                          <Ionicons name='copy-outline' size={20} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </DialogContent>
+              </Dialog>
             )}
           </View>
         </View>
       </View>
+      <SuccessDialog />
     </Card>
   );
 }

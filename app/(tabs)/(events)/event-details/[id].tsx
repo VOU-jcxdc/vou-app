@@ -165,6 +165,7 @@ export default function EventDetails() {
                 duration={voucher.duration}
                 usageMode={voucher.usageMode}
                 isAssigned={false}
+                quantity={item.quantity}
               />
             </View>
           );
