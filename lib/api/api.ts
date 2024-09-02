@@ -216,6 +216,19 @@ export async function fetchAccountItems(): Promise<AccountItemsResponse[]> {
   return Promise.resolve(items as AccountItemsResponse[]);
 }
 
+export async function fetchEventItems({ queryKey }: QueryFunctionContext<string[]>): Promise<Item[]> {
+  const [, eventId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/items`);
+  const items = response.data;
+
+  if (!items) {
+    throw new Error("User's items not found");
+  }
+
+  return Promise.resolve(items as Item[]);
+}
+
 export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string[]>): Promise<Recipe[]> {
   const [, id] = queryKey;
 
