@@ -1,15 +1,24 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Image, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Toast from 'react-native-toast-message';
 import { updateUsedVoucher } from '~/lib/api/api';
-import { AccountsVouchers, Voucher } from '~/lib/interfaces';
+import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger } from './ui/dialog';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from './ui/dialog';
 import { Text } from './ui/text';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -65,19 +74,39 @@ export default function VoucherCard({
       });
     },
   });
+  const [open, setOpen] = useState(false);
+  const [openSuccess, setOpenSuccess] = useState(false);
+
+  function SuccessDialog() {
+    return (
+      <Dialog open={openSuccess} onOpenChange={setOpenSuccess}>
+        <DialogContent className='w-96'>
+          <View className='flex gap-5 items-center'>
+            <View className=' flex items-center justify-center gap-2'>
+              <Image
+                className='rounded-full h-24 w-24'
+                source={{
+                  uri: 'https://cdn.vectorstock.com/i/500p/14/99/green-tick-marker-checkmark-circle-icon-vector-22691499.jpg',
+                }}
+              />
+            </View>
+            <View className='flex items-center'>
+              <Text className='text-base'>Sử dùng voucher thành công</Text>
+            </View>
+          </View>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
     onVoucherUsed?.();
+    setOpenSuccess(true);
   };
 
   const copyToClipboard = () => {
     Clipboard.setString(code);
-    Toast.show({
-      type: 'success',
-      text1: 'Copied to clipboard',
-      visibilityTime: 100,
-    });
   };
 
   const imageUri =
@@ -104,7 +133,8 @@ export default function VoucherCard({
           {!isAssigned && quantity == 0 && <Text className='text-secondary'>Ưu đãi đã hết</Text>}
           <View className='flex flex-row justify-between'>
             <Text className={usageModeTextClsName}>{usageMode}</Text>
-            {isAssigned && (
+
+            {isAssigned && usageMode == VoucherUsageMode.OFFLINE ? (
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant='ghost'>
@@ -143,10 +173,51 @@ export default function VoucherCard({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+            ) : (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button variant='ghost'>
+                    <Text className='text-primary font-medium'>Đổi quà</Text>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className='w-96'>
+                  <DialogHeader>
+                    <DialogDescription>
+                      Quà chỉ thực hiện đổi 1 lần, vui lòng copy mã quà để sử dụng sau
+                    </DialogDescription>
+                  </DialogHeader>
+                  <View className='flex gap-5 items-center'>
+                    <View className=' flex items-center justify-center gap-2'>
+                      <Image
+                        className='rounded-full h-24 w-24'
+                        source={{
+                          uri: 'https://seeklogo.com/images/G/grab-logo-7020E74857-seeklogo.com.png',
+                        }}
+                      />
+                    </View>
+                    <View className='flex items-center'>
+                      <Text className='text-base'>Grab</Text>
+                      <View className='flex flex-row items-center gap-2'>
+                        <Text className='text-lg font-medium'>{code}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            copyToClipboard();
+                            handleDone();
+                            setOpen(false);
+                            setOpenSuccess(true);
+                          }}>
+                          <Ionicons name='copy-outline' size={20} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </DialogContent>
+              </Dialog>
             )}
           </View>
         </View>
       </View>
+      <SuccessDialog />
     </Card>
   );
 }
