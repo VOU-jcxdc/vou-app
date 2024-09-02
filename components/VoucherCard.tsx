@@ -24,7 +24,7 @@ import { Text } from './ui/text';
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
-  Partial<Pick<AccountsVouchers, 'assignedOn' | 'quantity'>> & {
+  Partial<Pick<AccountsVouchers, 'assigenedOn' | 'quantity'>> & {
     isAssigned?: boolean;
     brandInfo?: { name: string; bucketId: string };
     onVoucherUsed?: () => void;
@@ -46,6 +46,8 @@ function DurationText({ assigned_on, duration }: { assigned_on: string; duration
           {diffHours > 24 ? `${diffDays} days left` : `${diffHours} hours left`}{' '}
         </Text>
       );
+  } else {
+    return <Text className='text-destructive'>Expired</Text>;
   }
 }
 
@@ -56,7 +58,7 @@ export default function VoucherCard({
   code,
   brandInfo,
   duration,
-  assignedOn,
+  assigenedOn,
   quantity,
   usageMode,
   isAssigned = true,
@@ -72,6 +74,7 @@ export default function VoucherCard({
         text1: 'Voucher used successfully',
         visibilityTime: 100,
       });
+      onVoucherUsed?.();
     },
   });
   const [open, setOpen] = useState(false);
@@ -101,7 +104,6 @@ export default function VoucherCard({
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
-    onVoucherUsed?.();
     setOpenSuccess(true);
   };
 
@@ -129,91 +131,91 @@ export default function VoucherCard({
             {quantity && <Text className='bg-slate-800 font-medium color-white px-2'>x{quantity}</Text>}
           </View>
           <Text className='text-base'>{description}</Text>
-          {assignedOn && <DurationText assigned_on={assignedOn} duration={duration} />}
+          {assigenedOn && <DurationText assigned_on={assigenedOn} duration={duration} />}
           {!isAssigned && quantity == 0 && <Text className='text-secondary'>Ưu đãi đã hết</Text>}
           <View className='flex flex-row justify-between'>
             <Text className={usageModeTextClsName}>{usageMode}</Text>
 
-            {isAssigned && usageMode == VoucherUsageMode.OFFLINE ? (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant='ghost'>
-                    <Text className='text-primary font-medium'>Đổi quà</Text>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className='w-96'>
-                  <View className='flex gap-5 items-center'>
-                    <View className=' flex items-center justify-center gap-2'>
-                      <Image
-                        className='rounded-full h-24 w-24'
-                        source={{
-                          uri: imageUri,
-                        }}
-                      />
-                    </View>
-                    <View className='flex items-center'>
-                      <Text className='text-base'>{brandInfo?.name || 'Brand name'}</Text>
-                      <View className='flex flex-row items-center gap-2'>
-                        <Text className='text-lg font-medium'>{code}</Text>
-                        <TouchableOpacity onPress={copyToClipboard}>
-                          <Ionicons name='copy-outline' size={20} />
-                        </TouchableOpacity>
+            {isAssigned &&
+              (usageMode == VoucherUsageMode.OFFLINE ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant='ghost'>
+                      <Text className='text-primary font-medium'>Đổi quà</Text>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className='w-96'>
+                    <View className='flex gap-5 items-center'>
+                      <View className=' flex items-center justify-center gap-2'>
+                        <Image
+                          className='rounded-full h-24 w-24'
+                          source={{
+                            uri: imageUri,
+                          }}
+                        />
+                      </View>
+                      <View className='flex items-center'>
+                        <Text className='text-base'>{brandInfo?.name || 'Brand name'}</Text>
+                        <View className='flex flex-row items-center gap-2'>
+                          <Text className='text-lg font-medium'>{code}</Text>
+                          <TouchableOpacity onPress={copyToClipboard}>
+                            <Ionicons name='copy-outline' size={20} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View className='p-5 rounded border-slate-200 border'>
+                        <QRCode value={code} />
                       </View>
                     </View>
-                    <View className='p-5 rounded border-slate-200 border'>
-                      <QRCode value={code} />
-                    </View>
-                  </View>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button onPress={handleDone}>
-                        <Text>Done</Text>
-                      </Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button variant='ghost'>
-                    <Text className='text-primary font-medium'>Đổi quà</Text>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className='w-96'>
-                  <DialogHeader>
-                    <DialogDescription>
-                      Quà chỉ thực hiện đổi 1 lần, vui lòng copy mã quà để sử dụng sau
-                    </DialogDescription>
-                  </DialogHeader>
-                  <View className='flex gap-5 items-center'>
-                    <View className=' flex items-center justify-center gap-2'>
-                      <Image
-                        className='rounded-full h-24 w-24'
-                        source={{
-                          uri: 'https://seeklogo.com/images/G/grab-logo-7020E74857-seeklogo.com.png',
-                        }}
-                      />
-                    </View>
-                    <View className='flex items-center'>
-                      <Text className='text-base'>Grab</Text>
-                      <View className='flex flex-row items-center gap-2'>
-                        <Text className='text-lg font-medium'>{code}</Text>
-                        <TouchableOpacity
-                          onPress={() => {
-                            copyToClipboard();
-                            handleDone();
-                            setOpen(false);
-                            setOpenSuccess(true);
-                          }}>
-                          <Ionicons name='copy-outline' size={20} />
-                        </TouchableOpacity>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button onPress={handleDone}>
+                          <Text>Done</Text>
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              ) : (
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant='ghost'>
+                      <Text className='text-primary font-medium'>Đổi quà</Text>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className='w-96'>
+                    <DialogHeader>
+                      <DialogDescription>
+                        Quà chỉ thực hiện đổi 1 lần, vui lòng copy mã quà để sử dụng sau
+                      </DialogDescription>
+                    </DialogHeader>
+                    <View className='flex gap-5 items-center'>
+                      <View className=' flex items-center justify-center gap-2'>
+                        <Image
+                          className='rounded-full h-24 w-24'
+                          source={{
+                            uri: 'https://seeklogo.com/images/G/grab-logo-7020E74857-seeklogo.com.png',
+                          }}
+                        />
+                      </View>
+                      <View className='flex items-center'>
+                        <Text className='text-base'>Grab</Text>
+                        <View className='flex flex-row items-center gap-2'>
+                          <Text className='text-lg font-medium'>{code}</Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              copyToClipboard();
+                              handleDone();
+                              setOpen(false);
+                            }}>
+                            <Ionicons name='copy-outline' size={20} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </DialogContent>
-              </Dialog>
-            )}
+                  </DialogContent>
+                </Dialog>
+              ))}
           </View>
         </View>
       </View>
