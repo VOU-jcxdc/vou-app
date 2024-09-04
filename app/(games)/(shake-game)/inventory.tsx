@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { FlatList, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, SafeAreaView, View } from 'react-native';
 import ItemCard from '~/components/ItemCard';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { fetchEventItems } from '~/lib/api/api';
@@ -24,7 +24,6 @@ export default function Inventory() {
   return (
     <SafeAreaView className='m-6 h-full gap-4'>
       <View className='flex-1 gap-4'>
-        <Text className='text-xl font-bold'>Event Items</Text>
         <FlatList
           data={data}
           numColumns={2}
