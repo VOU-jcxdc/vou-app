@@ -178,7 +178,7 @@ export default function EventDetails() {
               className='rounded bg-primary'
               onPress={() => {
                 router.push({
-                  pathname: '/(shake-game)',
+                  pathname: '/(quiz-game)',
                   params: { eventId: id },
                 });
               }}>
