@@ -48,7 +48,7 @@ interface AccountsVouchers {
   accountId: string;
   voucherId: string;
   quantity: number;
-  assignedOn: string;
+  assigenedOn: string;
   updatedOn: string;
   status: string;
 }

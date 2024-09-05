@@ -172,12 +172,17 @@ export async function fetchAcountVouchers(): Promise<AccountsVouchersResponse[]>
   return Promise.resolve(vouchers as AccountsVouchersResponse[]);
 }
 
-export async function updateUsedVoucher({ id }: { id: string }): Promise<void> {
-  const response = await doPut(`${apiUrl}/users/voucher/${id}/applying`, {
-    quantity: 1,
-  });
+export async function updateUsedVoucher({ id }: { id: string }): Promise<AccountsVouchersResponse> {
+  try {
+    const response = await doPut(`${apiUrl}/users/voucher/${id}/applying`, {
+      quantity: 1,
+    });
 
-  return Promise.resolve(response.data);
+    return Promise.resolve(response.data);
+  } catch (error) {
+    console.error('Error in updateUsedVoucher:', error);
+    throw error;
+  }
 }
 
 export async function fetchItem({ queryKey }: QueryFunctionContext<string[]>): Promise<Item> {
