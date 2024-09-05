@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
+import { getDiff } from '~/utils/DateTimeUtils';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import {
@@ -31,12 +32,7 @@ type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration'
   };
 
 function DurationText({ assigned_on, duration }: { assigned_on: string; duration: number }) {
-  const date = new Date(assigned_on.replace(' ', 'T'));
-  date.setSeconds(date.getSeconds() + duration);
-  // count hours to expired
-  const diff = date.getTime() - Date.now();
-  const diffHours = Math.floor(diff / 3600000);
-  const diffDays = Math.floor(diff / 86400000);
+  const { date, diff, diffDays, diffHours } = getDiff(assigned_on, duration);
   if (diff > 0) {
     if (diffDays > 5) {
       return <Text className='font-medium text-sm'>{'EXP: ' + date.toLocaleDateString()}</Text>;

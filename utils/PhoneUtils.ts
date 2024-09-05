@@ -22,3 +22,7 @@ export const formatPhoneNumberSubmit = (phone: string): string => {
   }
   return phone.replace(/\s+/g, ''); // Remove all spaces
 };
+
+export function normalizePhoneNumber(phone: string) {
+  return phone.replace(/^\+84/, '0').replace(/\D/g, '');
+}

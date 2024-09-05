@@ -40,3 +40,14 @@ export const getEventDateInfo = (begin: Date, end: Date) => {
 };
 
 export const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+export const getDiff = (assigned_on: string, duration: number) => {
+  const date = new Date(assigned_on.replace(' ', 'T'));
+  date.setSeconds(date.getSeconds() + duration);
+  // count hours to expired
+  const diff = date.getTime() - Date.now();
+  const diffHours = Math.floor(diff / 3600000);
+  const diffDays = Math.floor(diff / 86400000);
+
+  return { date, diff, diffHours, diffDays };
+};
