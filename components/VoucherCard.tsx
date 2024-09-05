@@ -24,7 +24,7 @@ import { Text } from './ui/text';
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
-  Partial<Pick<AccountsVouchers, 'assignedOn' | 'quantity'>> & {
+  Partial<Pick<AccountsVouchers, 'assigenedOn' | 'quantity'>> & {
     isAssigned?: boolean;
     brandInfo?: { name: string; bucketId: string };
     onVoucherUsed?: () => void;
@@ -46,6 +46,8 @@ function DurationText({ assigned_on, duration }: { assigned_on: string; duration
           {diffHours > 24 ? `${diffDays} days left` : `${diffHours} hours left`}{' '}
         </Text>
       );
+  } else {
+    return <Text className='text-destructive'>Expired</Text>;
   }
 }
 
@@ -56,7 +58,7 @@ export default function VoucherCard({
   code,
   brandInfo,
   duration,
-  assignedOn,
+  assigenedOn,
   quantity,
   usageMode,
   isAssigned = true,
@@ -72,6 +74,7 @@ export default function VoucherCard({
         text1: 'Voucher used successfully',
         visibilityTime: 100,
       });
+      onVoucherUsed?.();
     },
   });
   const [open, setOpen] = useState(false);
@@ -101,7 +104,6 @@ export default function VoucherCard({
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
-    onVoucherUsed?.();
     setOpenSuccess(true);
   };
 
@@ -129,7 +131,7 @@ export default function VoucherCard({
             {quantity && <Text className='bg-slate-800 font-medium color-white px-2'>x{quantity}</Text>}
           </View>
           <Text className='text-base'>{description}</Text>
-          {assignedOn && <DurationText assigned_on={assignedOn} duration={duration} />}
+          {assigenedOn && <DurationText assigned_on={assigenedOn} duration={duration} />}
           {!isAssigned && quantity == 0 && <Text className='text-secondary'>Ưu đãi đã hết</Text>}
           <View className='flex flex-row justify-between'>
             <Text className={usageModeTextClsName}>{usageMode}</Text>
@@ -205,7 +207,6 @@ export default function VoucherCard({
                               copyToClipboard();
                               handleDone();
                               setOpen(false);
-                              setOpenSuccess(true);
                             }}>
                             <Ionicons name='copy-outline' size={20} />
                           </TouchableOpacity>

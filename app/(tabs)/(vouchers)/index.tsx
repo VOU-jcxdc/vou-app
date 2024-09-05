@@ -41,7 +41,7 @@ export default function Vouchers() {
                 description={voucher.description}
                 code={voucher.code}
                 duration={voucher.duration}
-                assignedOn={item.assignedOn}
+                assigenedOn={item.assigenedOn}
                 quantity={item.quantity}
                 brandInfo={voucher.brandInfo}
                 usageMode={voucher.usageMode}
