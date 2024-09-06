@@ -19,7 +19,7 @@ export default function ShakeGameLayout() {
       <Stack.Screen
         name='inventory'
         options={{
-          title: 'Inventory',
+          title: 'Event Items',
           headerLeft: () => (
             <Pressable onPress={() => router.back()}>
               <Ionicons name='arrow-back' size={24} />

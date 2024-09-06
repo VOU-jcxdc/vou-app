@@ -2,14 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Image, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Skeleton } from '~/components/ui/skeleton';
-import VoucherCard from '~/components/VoucherCard';
 import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -76,11 +76,7 @@ export default function EventDetails() {
   if (isLoading) {
     return (
       <View className='aspect-video h-auto w-full items-center'>
-        <Skeleton className='mb-4 h-full w-full' />
-        <Skeleton className='mb-4 h-12 w-[368px]' />
-        <Skeleton className='mb-4 h-16 w-[368px]' />
-        <Skeleton className='mb-4 h-40 w-[368px]' />
-        <Skeleton className='h-screen w-[368px]' />
+        <ActivityIndicator />
       </View>
     );
   }
@@ -176,11 +172,17 @@ export default function EventDetails() {
           <View className='w-full px-4 py-4'>
             <Button
               className='rounded bg-primary'
+              disabled={data?.gameId === null}
               onPress={() => {
-                router.push({
-                  pathname: '/(quiz-game)',
-                  params: { eventId: id },
-                });
+                data?.gameId === SHAKE_GAME_ID
+                  ? router.push({
+                      pathname: '/(shake-game)',
+                      params: { eventId: id },
+                    })
+                  : router.push({
+                      pathname: '/(quiz-game)',
+                      params: { eventId: id },
+                    });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
