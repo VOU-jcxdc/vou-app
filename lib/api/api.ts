@@ -246,3 +246,25 @@ export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string
 
   return Promise.resolve(recipes as Recipe[]);
 }
+
+export async function fetchConfigs({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${id}/configs`);
+  const config = response.data;
+
+  if (!config) {
+    throw new Error('Event not found');
+  }
+
+  return Promise.resolve(config as any);
+}
+
+export async function updateConfigs(params: { eventId: string; config: number }): Promise<any> {
+  const { eventId, config } = params;
+  const response = await doPost(`${apiUrl}/events/configs`, {
+    eventId,
+    config,
+  });
+  return response;
+}

@@ -8,7 +8,14 @@ import Toast from 'react-native-toast-message';
 import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import {
+  addFavoriteEvent,
+  fetchConfigs,
+  fetchEvent,
+  fetchEventVouchers,
+  fetchFile,
+  removeFavoriteEvent,
+} from '~/lib/api/api';
 import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
@@ -21,6 +28,10 @@ export default function EventDetails() {
   const { data, isLoading } = useQuery({
     queryKey: ['event', id as string],
     queryFn: fetchEvent,
+  });
+  const configs = useQuery({
+    queryKey: ['configs', id as string],
+    queryFn: fetchConfigs,
   });
 
   const { data: eventImage } = useQuery({
@@ -73,7 +84,7 @@ export default function EventDetails() {
     return null;
   }
 
-  if (isLoading) {
+  if (isLoading || configs.isLoading) {
     return (
       <View className='aspect-video h-auto w-full items-center'>
         <ActivityIndicator />
@@ -177,11 +188,11 @@ export default function EventDetails() {
                 data?.gameId === SHAKE_GAME_ID
                   ? router.push({
                       pathname: '/(shake-game)',
-                      params: { eventId: id },
+                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
                     })
                   : router.push({
                       pathname: '/(quiz-game)',
-                      params: { eventId: id },
+                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
                     });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>

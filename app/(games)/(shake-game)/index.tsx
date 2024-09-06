@@ -1,22 +1,37 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import React, { useEffect } from 'react';
 import { Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
 import ShakeItemModal from '~/components/ShakeItemModal';
-import { fetchItem } from '~/lib/api/api';
+import { fetchItem, updateConfigs } from '~/lib/api/api';
 import { Item } from '~/lib/interfaces';
 
-const defaultConfig = 10;
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ShakeGame() {
   const queryClient = useQueryClient();
-  const { eventId } = useLocalSearchParams();
-  const [config, setConfig] = React.useState<number>(defaultConfig);
+  const { eventId, configs } = useLocalSearchParams();
+  const [config, setConfig] = React.useState<number>(+configs);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
   const [item, setItem] = React.useState<Item | null>(null);
+  const configMutation = useMutation({
+    mutationFn: (configs: number) => updateConfigs({ eventId: eventId as string, config: configs }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['configs'] });
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  //Use this to fetch the config from the server
+  // useEffect(() => {
+  //   if (config === 0) {
+  //     configMutation.mutate(10);
+  //   }
+  // }, [config]);
 
   useEffect(() => {
     if (!modalVisible && config > 0) {
@@ -25,6 +40,12 @@ export default function ShakeGame() {
     return () => {
       DeviceMotion.removeAllListeners();
     };
+  }, [modalVisible, config]);
+
+  useEffect(() => {
+    if (modalVisible && config > 0) {
+      configMutation.mutate(-1);
+    }
   }, [modalVisible, config]);
 
   const onDeviceMotionChange = async (event: any) => {
