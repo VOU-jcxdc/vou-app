@@ -14,7 +14,7 @@ async function doPost(url: string, data: any) {
   return response.data;
 }
 
-async function doGet(url: string) {
+async function doGet(url: string, query?: string) {
   const token = (await AsyncStorage.getItem('token')) || '';
 
   const response = await axios.get(url, {

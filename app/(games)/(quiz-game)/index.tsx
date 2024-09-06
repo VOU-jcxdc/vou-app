@@ -1,20 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { Text, View } from 'react-native';
 import io from 'socket.io-client';
-
-interface IQA {
-  question: string;
-  options: string[];
-  answer: number;
-}
+import { fetchQuizGameQAs } from '~/lib/api/api';
+import { IQA } from '~/lib/interfaces/qa';
 
 export default function QuizGame() {
   const [numPlayers, setNumPlayers] = React.useState(0);
   const [status, setStatus] = React.useState('');
   const [countdown, setCountdown] = React.useState<number>(0);
   const [currentQA, setCurrentQA] = React.useState<IQA | null>(null);
-  const [listQA, setListQA] = React.useState<IQA[]>([]);
+  const [isShowAnswer, setIsShowAnswer] = React.useState<boolean>(false);
+  const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const listQARef = React.useRef<IQA[]>([]);
+
+  const { data, isPending } = useQuery({
+    queryKey: ['quiz-game-qas', '66dac01dad0e2bf0d1f1ee0e'], //roomId
+    queryFn: fetchQuizGameQAs,
+  });
+
+  React.useEffect(() => {
+    if (isPending) {
+      return;
+    }
+    listQARef.current = data || [];
+  }, [data]);
 
   React.useEffect(() => {
     async function connectSocket() {
@@ -23,20 +34,23 @@ export default function QuizGame() {
         extraHeaders: {
           Authorization: `Bearer ${token}`,
         },
+        query: {
+          roomId: '66dac01dad0e2bf0d1f1ee0e', //roomId
+        },
       });
       socket.on('connect', () => {
         console.log('connected');
       });
 
-      socket.on('waiting-players', (data: { message: string; questions: IQA[] }) => {
-        setStatus('Waiting for players to join');
-        setListQA(data.questions);
+      socket.on('waiting-players', (data: { message: string }) => {
+        setStatus(data.message);
       });
 
-      socket.on('player-joined', (data: { numPlayers: number }) => {
-        console.log('new-player', data);
+      socket.on('player-joined', (data: { message: string }) => {
+        console.log('question', data);
 
         setNumPlayers((current) => current + 1);
+        setStatus(data.message);
       });
 
       socket.on('game-start', () => {
@@ -44,16 +58,23 @@ export default function QuizGame() {
       });
 
       socket.on('start-question', (data: { noQa: number }) => {
+        setIsShowAnswer(false);
         setStatus('Question is being asked');
         console.log(data.noQa);
-        console.log(listQA[data.noQa]);
-        setCurrentQA(listQA[data.noQa]);
+        console.log('list', listQARef.current);
+        setCurrentQA(listQARef.current[data.noQa]);
         startCountdown(10); // Start countdown when question starts
       });
 
-      socket.on('end-question', (data: { message: string }) => {
+      socket.on('answer-question', (data: { message: string }) => {
         setStatus(data.message);
-        setCountdown(10); // Clear countdown when question ends
+        startCountdown(10); // Start countdown when answer is shown
+      });
+
+      socket.on('show-answer', (data: { message: string }) => {
+        setStatus(data.message);
+        startCountdown(10); // Start countdown when answer is shown
+        setIsShowAnswer(true);
       });
     }
 
@@ -62,11 +83,16 @@ export default function QuizGame() {
 
   // Countdown logic
   const startCountdown = (timeLeft: number) => {
+    // Clear previous interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
     setCountdown(timeLeft);
-    const intervalId = setInterval(() => {
+    countdownIntervalRef.current = setInterval(() => {
       setCountdown((current) => {
         if (current <= 1) {
-          clearInterval(intervalId);
+          clearInterval(countdownIntervalRef.current!);
           return 0;
         } else {
           return current - 1;
@@ -81,13 +107,13 @@ export default function QuizGame() {
       <Text>Status: {status}</Text>
       <Text>Question: {currentQA?.question}</Text>
       {currentQA !== null &&
-        currentQA.options.map((option, index) => (
+        currentQA?.options.map((option, index) => (
           <Text key={index}>
             {index + 1}. {option}
           </Text>
         ))}
       {countdown !== null && <Text>Time left: {countdown} seconds</Text>}
-      {countdown === 0 && <Text>Answer: {currentQA?.options[currentQA.answer]}</Text>}
+      {isShowAnswer && <Text>Answer: {currentQA?.options[currentQA.answer - 1]}</Text>}
     </View>
   );
 }

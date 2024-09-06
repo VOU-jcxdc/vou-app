@@ -14,6 +14,7 @@ import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
 import { PresignedUrl } from '../interfaces/image';
 import { AccountItemsResponse } from '../interfaces/item';
+import { IQA } from '../interfaces/qa';
 import { Recipe } from '../interfaces/recipe';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -240,4 +241,17 @@ export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string
   }
 
   return Promise.resolve(recipes as Recipe[]);
+}
+
+export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/quiz-game/questions?roomId=${id}`);
+  const questions = response.data;
+
+  if (!questions) {
+    throw new Error('Questions not found');
+  }
+
+  return Promise.resolve(questions as IQA[]);
 }
