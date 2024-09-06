@@ -13,7 +13,7 @@ import {
 } from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
-import { SendGiftRequest } from '../interfaces/gift';
+import { RequestItemRequest, RequestResponse, SendGiftRequest } from '../interfaces/gift';
 import { PresignedUrl } from '../interfaces/image';
 import { AccountItemsResponse } from '../interfaces/item';
 import { Recipe } from '../interfaces/recipe';
@@ -271,5 +271,60 @@ export async function sendGift(body: SendGiftRequest) {
   } catch (error) {
     console.error('Error sending gift:', error);
     throw new Error('Error sending gift');
+  }
+}
+
+export async function requestItem(body: RequestItemRequest) {
+  try {
+    const response = await doPost(`${apiUrl}/gifts`, body);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting item:', error);
+    throw new Error('Error requesting item');
+  }
+}
+
+export async function fetchReceivedRequests(): Promise<RequestResponse[]> {
+  const response = await doGet(`${apiUrl}/gifts/received-requests`);
+  const requests = response.data;
+
+  if (!requests) {
+    throw new Error('Received requests not found');
+  }
+
+  return Promise.resolve(requests as RequestResponse[]);
+}
+
+export async function fetchSendedRequests(): Promise<RequestResponse[]> {
+  const response = await doGet(`${apiUrl}/gifts/sent-requests`);
+  const requests = response.data;
+
+  if (!requests) {
+    throw new Error('Sended requests not found');
+  }
+
+  return Promise.resolve(requests as RequestResponse[]);
+}
+
+export async function acceptRequest({ id }: { id: string }) {
+  try {
+    const response = await doPut(`${apiUrl}/gifts/${id}`, {});
+
+    return response.data;
+  } catch (error) {
+    console.error('Error accepting request:', error);
+    throw new Error('Error accepting request');
+  }
+}
+
+export async function rejectRequest({ id }: { id: string }) {
+  try {
+    const response = await doDelete(`${apiUrl}/gifts/${id}`);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting request:', error);
+    throw new Error('Error rejecting request');
   }
 }

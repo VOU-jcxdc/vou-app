@@ -51,3 +51,41 @@ export const getDiff = (assigned_on: string, duration: number) => {
 
   return { date, diff, diffHours, diffDays };
 };
+
+export const getTimeDifference = (sendDate: string): string => {
+  const now = new Date();
+  const diffInMs = now.getTime() - new Date(sendDate).getTime();
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+
+  if (diffInSeconds < 60) {
+    return `${diffInSeconds}s`;
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}min`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours}h`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays}d`;
+  }
+
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInDays < 30) {
+    return `${diffInWeeks}w`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInDays < 365) {
+    return `${diffInMonths}m`;
+  }
+
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears}y`;
+};

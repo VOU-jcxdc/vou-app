@@ -1,3 +1,5 @@
+import { Item } from './item';
+
 interface SendGiftRequest {
   senderId: string;
   receiverId: string;
@@ -5,4 +7,14 @@ interface SendGiftRequest {
   eventId: string;
 }
 
-export { SendGiftRequest };
+type RequestItemRequest = SendGiftRequest & { quantity: number };
+
+type RequestResponse = SendGiftRequest & {
+  id: string;
+  sendDate: string;
+  quantity: number;
+  status: string;
+  item: Item;
+};
+
+export { RequestItemRequest, RequestResponse, SendGiftRequest };
