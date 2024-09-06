@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { FlatList, Pressable, SafeAreaView, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import ItemCard from '~/components/ItemCard';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Text } from '~/components/ui/text';
@@ -56,6 +57,7 @@ export default function Gifts() {
           className='w-full'
         />
       </View>
+      <Toast />
     </SafeAreaView>
   );
 }

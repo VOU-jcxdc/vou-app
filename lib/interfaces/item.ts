@@ -25,12 +25,9 @@ interface Item {
 
 interface AccountItems {
   id: string;
-  acountId: string;
   status: AccountItemsStatus;
   assignedDate: string;
-  itemId: string;
   quantity: number;
-  updatedOn: string;
 }
 
 type AccountItemsResponse = AccountItems & {

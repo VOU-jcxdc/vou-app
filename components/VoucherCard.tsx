@@ -9,6 +9,7 @@ import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
 import { getDiff } from '~/utils/DateTimeUtils';
+import SuccessDialog from './SuccessDialog';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import {
@@ -75,28 +76,6 @@ export default function VoucherCard({
   });
   const [open, setOpen] = useState(false);
   const [openSuccess, setOpenSuccess] = useState(false);
-
-  function SuccessDialog() {
-    return (
-      <Dialog open={openSuccess} onOpenChange={setOpenSuccess}>
-        <DialogContent className='w-96'>
-          <View className='flex gap-5 items-center'>
-            <View className=' flex items-center justify-center gap-2'>
-              <Image
-                className='rounded-full h-24 w-24'
-                source={{
-                  uri: 'https://cdn.vectorstock.com/i/500p/14/99/green-tick-marker-checkmark-circle-icon-vector-22691499.jpg',
-                }}
-              />
-            </View>
-            <View className='flex items-center'>
-              <Text className='text-base'>Sử dùng voucher thành công</Text>
-            </View>
-          </View>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
@@ -215,7 +194,7 @@ export default function VoucherCard({
           </View>
         </View>
       </View>
-      <SuccessDialog />
+      <SuccessDialog open={openSuccess} setOpen={setOpenSuccess} message='Sử dụng voucher thành công' />
     </Card>
   );
 }

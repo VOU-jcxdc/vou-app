@@ -8,10 +8,12 @@ import {
   EventsVouchersResponse,
   FavoriteEventsResponse,
   Item,
+  SearchPlayer,
   User,
 } from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
+import { SendGiftRequest } from '../interfaces/gift';
 import { PresignedUrl } from '../interfaces/image';
 import { AccountItemsResponse } from '../interfaces/item';
 import { Recipe } from '../interfaces/recipe';
@@ -245,4 +247,29 @@ export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string
   }
 
   return Promise.resolve(recipes as Recipe[]);
+}
+
+export async function searchPlayers({ queryKey }: QueryFunctionContext<string[]>): Promise<SearchPlayer[]> {
+  const [, keySearch] = queryKey;
+  const offset = 0;
+
+  const response = await doGet(`${apiUrl}/users?offset=${offset}&limit=${LIMIT}&role=player&keySearch=${keySearch}`);
+  const users = response.data.accounts;
+
+  if (!users) {
+    throw new Error('Users not found');
+  }
+
+  return Promise.resolve(users as SearchPlayer[]);
+}
+
+export async function sendGift(body: SendGiftRequest) {
+  try {
+    const response = await doPost(`${apiUrl}/gifts/sending`, body);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error sending gift:', error);
+    throw new Error('Error sending gift');
+  }
 }

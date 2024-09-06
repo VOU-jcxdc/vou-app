@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
-import { FlatList, Image, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
@@ -17,11 +18,13 @@ import {
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { useAuth } from '~/context/AuthContext';
-import { fetchRecipesItem } from '~/lib/api/api';
+import { useDebounce } from '~/hooks/useDebounce';
+import { fetchRecipesItem, searchPlayers, sendGift } from '~/lib/api/api';
+import { SearchPlayer } from '~/lib/interfaces';
 import { AccountItemsResponse } from '~/lib/interfaces/item';
 import { Recipe } from '~/lib/interfaces/recipe';
 import { cn } from '~/lib/utils';
-import { formatPhoneNumberSubmit, normalizePhoneNumber } from '~/utils/PhoneUtils';
+import { normalizePhoneNumber, replacePrefixPhone } from '~/utils/PhoneUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -98,33 +101,6 @@ function RecipeCard({
   );
 }
 
-const users = [
-  {
-    id: '1',
-    phone: '+84999999999',
-    email: 'example@gmail.com',
-    username: 'example',
-  },
-  {
-    id: '2',
-    phone: '+84999999989',
-    email: 'a@gmail.com',
-    username: 'a',
-  },
-  {
-    id: '3',
-    phone: '+84999999979',
-    email: 'b@gmail.com',
-    username: 'b',
-  },
-  {
-    id: '4',
-    phone: '+84999999969',
-    email: 'c@gmail.com',
-    username: 'c',
-  },
-];
-
 function HighlightedText({ text, highlight, className }: { text: string; highlight: string; className?: string }) {
   if (!highlight.trim()) {
     return <Text className={className}>{text}</Text>;
@@ -156,95 +132,124 @@ function GiftDialog({
   curItem: AccountItemsResponse;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUser, setSelectedUser] = useState<SearchPlayer>();
   const [clicked, setClicked] = useState(false);
-  const { uuid } = useAuth();
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.phone.includes(formatPhoneNumberSubmit(`+84 ${searchQuery}`)) ||
-      user.email.includes(searchQuery) ||
-      user.username.includes(searchQuery)
-  );
+  const { data, isPending } = useQuery({
+    queryKey: ['search-players', replacePrefixPhone(debouncedSearchQuery)],
+    queryFn: searchPlayers,
+  });
+
+  const { mutate, isPending: isMutationPending } = useMutation({
+    mutationFn: sendGift,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account-items'] });
+      router.back();
+      Toast.show({
+        type: 'success',
+        text1: `Đã tặng ${curItem.item.name} thành công cho ${selectedUser?.username}`,
+        visibilityTime: 1500,
+      });
+      onOpenChange(false);
+    },
+  });
 
   const handleGiveItem = () => {
     const body = {
-      senderId: uuid,
-      receiverId: selectedUser,
+      senderId: userId as string,
+      receiverId: selectedUser?.id as string,
       itemId: curItem.item.id,
       eventId: curItem.item.eventId,
-      createdOn: new Date().toISOString(),
     };
+    mutate(body);
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px] flex-col'>
-        <DialogHeader>
-          <DialogTitle>Gift exchange</DialogTitle>
-          <DialogDescription>Find and choose your friend to give them this item.</DialogDescription>
-        </DialogHeader>
-        <View>
-          <View className='flex-row border items-center border-gray-300 rounded-3xl'>
-            <Ionicons name='search' size={24} className='ml-3' color='#d1d5db' />
-            <Input
-              placeholder='Search by phone, email or username'
-              onChangeText={(value) => {
-                setSearchQuery(value);
-                clicked && setClicked(false);
-              }}
-              value={searchQuery}
-              className='flex-1 border-0 bg-inherit'
-            />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className='sm:max-w-[425px] flex-col'>
+          <DialogHeader>
+            <DialogTitle>Gift exchange</DialogTitle>
+            <DialogDescription>Find and choose your friend to give them this item.</DialogDescription>
+          </DialogHeader>
+          <View>
+            <View className='flex-row border items-center border-gray-300 rounded-3xl'>
+              <Ionicons name='search' size={24} className='ml-3' color='#d1d5db' />
+              <Input
+                placeholder='Search by phone, email or username'
+                onChangeText={(value) => {
+                  setSearchQuery(value);
+                  clicked && setClicked(false);
+                }}
+                value={searchQuery}
+                className='flex-1 border-0 bg-inherit'
+              />
+            </View>
+            {searchQuery.length > 0 && !clicked ? (
+              isPending ? (
+                <ActivityIndicator className='pt-3' />
+              ) : (
+                <FlatList
+                  data={data}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      className='flex-col p-3 '
+                      key={item.id}
+                      onPress={() => {
+                        setSelectedUser(item);
+                        setClicked(true);
+                      }}>
+                      <Text className='font-medium text-lg'>
+                        <HighlightedText text={item.username} highlight={debouncedSearchQuery} />
+                      </Text>
+                      <Text>
+                        <HighlightedText
+                          text={normalizePhoneNumber(item.phone)}
+                          highlight={debouncedSearchQuery}
+                          className='text-muted-foreground'
+                        />{' '}
+                        -{' '}
+                        <HighlightedText
+                          text={item.email}
+                          highlight={debouncedSearchQuery}
+                          className='text-muted-foreground'
+                        />
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  className='flex-grow-0'
+                  ItemSeparatorComponent={() => <View className='border-b-2 border-b-gray-200' />}
+                  ListEmptyComponent={() => (
+                    <View className='flex-col p-3'>
+                      <Text className='text-lg'>No results found</Text>
+                    </View>
+                  )}
+                />
+              )
+            ) : (
+              (clicked || selectedUser) && (
+                <View className='flex-col p-3'>
+                  <Text className='font-medium text-lg'>{selectedUser?.username}</Text>
+                  <Text className='text-muted-foreground'>
+                    {selectedUser?.phone} - {selectedUser?.email}
+                  </Text>
+                </View>
+              )
+            )}
           </View>
-          {searchQuery.length > 0 && !clicked ? (
-            <FlatList
-              data={filteredUsers}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  className='flex-col p-3 '
-                  key={item.id}
-                  onPress={() => {
-                    setSelectedUser(item.id);
-                    setClicked(true);
-                  }}>
-                  <Text className='font-medium text-lg'>
-                    <HighlightedText text={item.username} highlight={searchQuery} />
-                  </Text>
-                  <Text>
-                    <HighlightedText
-                      text={normalizePhoneNumber(item.phone)}
-                      highlight={normalizePhoneNumber(searchQuery)}
-                      className='text-muted-foreground'
-                    />{' '}
-                    - <HighlightedText text={item.email} highlight={searchQuery} className='text-muted-foreground' />
-                  </Text>
-                </TouchableOpacity>
-              )}
-              className='flex-grow-0'
-              ItemSeparatorComponent={() => <View className='border-b-2 border-b-gray-200' />}
-            />
-          ) : (
-            (clicked || selectedUser) && (
-              <View className='flex-col p-3'>
-                <Text className='font-medium text-lg'>{users.find((user) => user.id === selectedUser)?.username} </Text>
-                <Text className='text-muted-foreground'>
-                  {users.find((user) => user.id === selectedUser)?.phone} -{' '}
-                  {users.find((user) => user.id === selectedUser)?.email}
-                </Text>
-              </View>
-            )
-          )}
-        </View>
-        <DialogFooter className=''>
-          <Button onPress={handleGiveItem}>
-            <Text>Give item</Text>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className=''>
+            <Button onPress={handleGiveItem} disabled={!selectedUser}>
+              <Text>Give item</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -283,6 +288,7 @@ export default function ItemDetails() {
     return (
       <View className='flex-1 justify-center items-center'>
         <Text className='text-2xl'>There is no recipe for this item</Text>
+        <GiftDialog open={giftDialogVisible} onOpenChange={setGiftDialogVisible} curItem={curItem} />
       </View>
     );
   }

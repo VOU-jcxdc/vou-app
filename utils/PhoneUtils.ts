@@ -26,3 +26,7 @@ export const formatPhoneNumberSubmit = (phone: string): string => {
 export function normalizePhoneNumber(phone: string) {
   return phone.replace(/^\+84/, '0').replace(/\D/g, '');
 }
+
+export const replacePrefixPhone = (phone: string): string => {
+  return phone.replace(/^(0|\+84)/, '');
+};
