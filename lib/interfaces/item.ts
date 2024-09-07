@@ -21,6 +21,7 @@ interface Item {
   createdOn: string;
   updatedOn: string;
   quantity: number;
+  originalQuantity: number;
 }
 
 interface AccountItems {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import GiftDialog from '~/components/GiftDialog';
 import ItemCard from '~/components/ItemCard';
