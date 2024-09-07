@@ -45,6 +45,7 @@ export default function ShakeGame() {
   useEffect(() => {
     if (modalVisible && config > 0) {
       configMutation.mutate(-1);
+      queryClient.invalidateQueries({ queryKey: ['account-items'] });
     }
   }, [modalVisible, config]);
 
