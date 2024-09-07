@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
 import ShakeItemModal from '~/components/ShakeItemModal';
 import { fetchItem, updateConfigs } from '~/lib/api/api';
@@ -13,9 +13,9 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 export default function ShakeGame() {
   const queryClient = useQueryClient();
   const { eventId, configs } = useLocalSearchParams();
-  const [config, setConfig] = React.useState<number>(+configs);
-  const [modalVisible, setModalVisible] = React.useState<boolean>(false);
-  const [item, setItem] = React.useState<Item | null>(null);
+  const [config, setConfig] = useState<number>(+configs);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [item, setItem] = useState<Item | null>(null);
   const configMutation = useMutation({
     mutationFn: (configs: number) => updateConfigs({ eventId: eventId as string, config: configs }),
     onSuccess: () => {

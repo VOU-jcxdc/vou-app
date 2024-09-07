@@ -19,4 +19,14 @@ interface User {
   };
 }
 
-export { User };
+interface SearchPlayer {
+  id: string;
+  username: string;
+  email: string;
+  phone: string;
+  status: string;
+  role: string;
+  createdOn: string;
+}
+
+export { SearchPlayer, User };

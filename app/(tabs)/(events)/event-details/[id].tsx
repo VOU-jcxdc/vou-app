@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
 import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
@@ -74,7 +75,7 @@ export default function EventDetails() {
     },
   });
 
-  const { data: eventVouchers } = useQuery({
+  const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
     enabled: !!data,
@@ -199,6 +200,7 @@ export default function EventDetails() {
             </Button>
           </View>
         }
+        ListEmptyComponent={() => <>{isPending && <LoadingIndicator />}</>}
       />
       <Toast />
     </View>

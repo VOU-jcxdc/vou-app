@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLayoutEffect, useState } from 'react';
 import { FlatList, Image, View } from 'react-native';
+import GiftDialog from '~/components/GiftDialog';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
@@ -88,12 +90,26 @@ function RecipeCard({
 
 export default function ItemDetails() {
   const { id, accountItems } = useLocalSearchParams();
-  const accItems = JSON.parse(accountItems as string);
-
+  const navigation = useNavigation();
+  const [giftDialogVisible, setGiftDialogVisible] = useState(false);
   const { data, isPending } = useQuery({
     queryKey: ['recipes-item', id as string],
     queryFn: fetchRecipesItem,
   });
+
+  const accItems: AccountItemsResponse[] = JSON.parse(accountItems as string);
+  const curItem = accItems.find((item) => item.item.id === id) || accItems[0];
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: curItem?.item.name,
+      headerRight: () => <Ionicons name='send-outline' size={24} onPress={handleHeaderRightPress} />,
+    });
+  }, [navigation]);
+
+  const handleHeaderRightPress = () => {
+    setGiftDialogVisible(true);
+  };
 
   if (isPending) {
     return <LoadingIndicator />;
@@ -107,6 +123,14 @@ export default function ItemDetails() {
     return (
       <View className='flex-1 justify-center items-center'>
         <Text className='text-2xl'>There is no recipe for this item</Text>
+        <GiftDialog
+          open={giftDialogVisible}
+          onOpenChange={setGiftDialogVisible}
+          curItem={curItem.item}
+          title='Gift exchange'
+          description='Find and choose your friend to give them this item.'
+          type='give'
+        />
       </View>
     );
   }
@@ -125,6 +149,14 @@ export default function ItemDetails() {
         )}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View className='h-4' />}
+      />
+      <GiftDialog
+        open={giftDialogVisible}
+        onOpenChange={setGiftDialogVisible}
+        curItem={curItem.item}
+        title='Gift exchange'
+        description='Find and choose your friend to give them this item.'
+        type='give'
       />
     </View>
   );
