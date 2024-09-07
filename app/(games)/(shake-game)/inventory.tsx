@@ -25,7 +25,6 @@ export default function Inventory() {
   return (
     <SafeAreaView className='m-6 h-full gap-4'>
       <View className='flex-1 gap-4'>
-        <Text className='text-xl font-bold'>Event Items</Text>
         <FlatList
           data={data}
           numColumns={2}

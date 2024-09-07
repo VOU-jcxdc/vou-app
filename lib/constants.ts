@@ -17,5 +17,5 @@ export const NAV_THEME = {
   },
 };
 
-export const shakeGameId = '8340911c-a33e-4d59-9669-093fb2db46cd';
-export const quizGameId = 'd463bd0b-99ae-4070-b4e4-5d390ec3211c';
+export const SHAKE_GAME_ID = '8340911c-a33e-4d59-9669-093fb2db46cd';
+export const QUIZ_GAME_ID = 'd463bd0b-99ae-4070-b4e4-5d390ec3211c';
