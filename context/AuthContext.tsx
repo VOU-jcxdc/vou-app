@@ -4,10 +4,11 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  userId: string | null;
   token: string | null;
-  uuid: string | null;
+  firebaseUuid: string | null;
   role: string | null;
-  setAuthInfo: (token: string, uuid: string, role: string) => void;
+  setAuthInfo: (token: string, firebaseUuid: string) => void;
   clearAuthInfo: () => void;
 }
 
@@ -26,8 +27,9 @@ interface DecodedToken {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [uuid, setUuid] = useState<string | null>(null);
+  const [firebaseUuid, setUuid] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -36,13 +38,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuthStatus = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('token');
-        const storedUuid = await AsyncStorage.getItem('uuid');
+        const storedUuid = await AsyncStorage.getItem('firebaseUuid');
 
         if (storedToken) {
           const decodedToken: DecodedToken = jwtDecode<DecodedToken>(storedToken);
           const currentTime = Date.now() / 1000;
 
           if (decodedToken.exp > currentTime) {
+            setUserId(decodedToken.userId);
             setToken(storedToken);
             setUuid(storedUuid);
             setRole(decodedToken.role);
@@ -75,23 +78,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []);
 
-  const setAuthInfo = (token: string, uuid: string, role: string) => {
+  const setAuthInfo = (token: string, uuid: string) => {
+    const decodedToken: DecodedToken = jwtDecode<DecodedToken>(token);
+    setUserId(decodedToken.userId);
     setToken(token);
     setUuid(uuid);
-    setRole(role);
+    setRole(decodedToken.role);
     setIsAuthenticated(true);
+    AsyncStorage.setItem('userId', decodedToken.userId);
     AsyncStorage.setItem('token', token);
-    AsyncStorage.setItem('uuid', uuid);
-    AsyncStorage.setItem('role', role);
+    AsyncStorage.setItem('firebaseUuid', uuid);
+    AsyncStorage.setItem('role', decodedToken.role);
   };
 
   const clearAuthInfo = () => {
+    setUserId(null);
     setToken(null);
     setUuid(null);
     setRole(null);
     setIsAuthenticated(false);
+    AsyncStorage.removeItem('userId');
     AsyncStorage.removeItem('token');
-    AsyncStorage.removeItem('uuid');
+    AsyncStorage.removeItem('firebaseUuid');
     AsyncStorage.removeItem('role');
   };
 
@@ -100,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, token, uuid, role, setAuthInfo, clearAuthInfo }}>
+    <AuthContext.Provider value={{ isAuthenticated, userId, token, firebaseUuid, role, setAuthInfo, clearAuthInfo }}>
       {children}
     </AuthContext.Provider>
   );

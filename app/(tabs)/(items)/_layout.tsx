@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack } from 'expo-router';
 
 export default function ItemsLayout() {
@@ -10,13 +9,7 @@ export default function ItemsLayout() {
           title: 'Items',
         }}
       />
-      <Stack.Screen
-        name='item-details/[id]'
-        options={{
-          title: 'Item Details',
-          headerRight: () => <Ionicons name='send-outline' size={24} />,
-        }}
-      />
+      <Stack.Screen name='item-details/[id]' />
     </Stack>
   );
 }
