@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, Text, View } from 'react-native';
 import io from 'socket.io-client';
 import { Colors } from '~/constants/Colors';
 
@@ -11,7 +11,7 @@ import { IQA } from '~/lib/interfaces';
 import useQuizGameStore from '~/stores/quizGame';
 
 const instruction =
-  "Please wait for other players to join the game. Once the game starts, you'll be asked a series of questions. Answer them correctly to earn points. Good luck!";
+  'Objective: Answer as many questions correctly within the given time limit.\nGameplay:\n1. Players join the game and wait for the quiz to start.\n2. Questions are displayed one at a time, and players must select the correct answer from multiple choices.\n3. Points are awarded for each correct answer, and the faster the response, the more points are earned.\n4. The game continues until the time limit is reached or all questions are answered.\n5. The player with the highest score at the end of the game wins.\nRules:\n1. No cheating or using external help.\n2. Players must answer within the time limit for each question.';
 
 export default function QuizGameRoom() {
   const { token } = useLocalSearchParams();
@@ -162,8 +162,8 @@ export default function QuizGameRoom() {
     <SafeAreaView className='flex-1 bg-purple-100'>
       {isWaiting ? (
         <View className='px-6 py-10'>
-          <Text className='text-lg mb-3 font-bold'>Instruction</Text>
-          <Text>{instruction}</Text>
+          <Text className='text-2xl mb-3 font-bold'>Quiz Game Instruction</Text>
+          <Text className='text-lg'>{instruction}</Text>
         </View>
       ) : (
         <View className='flex flex-1 bg-purple-100 px-6 py-10'>
@@ -174,11 +174,11 @@ export default function QuizGameRoom() {
                 <View className='bg-primary w-full py-16 rounded-xl p-4 flex items-center justify-center'>
                   <Text className='font-bold text-white text-2xl'>You scored {score} points!</Text>
                 </View>
-                <View className='w-full items-center justify-center gap-6 rounded-3xl bg-white px-5 py-10 border'>
+                {/* <View className='w-full items-center justify-center gap-6 rounded-3xl bg-white px-5 py-10 border'>
                   <Text className='text-2xl font-semibold'>You win a prize!</Text>
                   <Image className='w-40 h-40' source={{ uri: 'https://picsum.photos/id/237/200/200' }} />
                   <Text className='text-xl font-semibold'>Voucher</Text>
-                </View>
+                </View> */}
               </View>
               <Pressable
                 className='bg-primary p-4 rounded-xl w-fit self-center items-center'
