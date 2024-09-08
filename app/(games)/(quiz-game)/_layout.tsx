@@ -6,7 +6,7 @@ export default function QuizGameLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name='play'
+        name='index'
         options={{
           title: 'Quiz Game',
           headerLeft: () => (
@@ -14,18 +14,6 @@ export default function QuizGameLayout() {
               <Ionicons name='arrow-back' size={24} />
             </Pressable>
           ),
-        }}
-      />
-      <Stack.Screen
-        name='index'
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name='complete'
-        options={{
-          headerShown: false,
         }}
       />
       <Stack.Screen

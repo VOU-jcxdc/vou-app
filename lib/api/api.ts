@@ -7,6 +7,7 @@ import {
   EventsResponse,
   EventsVouchersResponse,
   FavoriteEventsResponse,
+  IQA,
   Item,
   User,
 } from '~/lib/interfaces';
@@ -245,4 +246,17 @@ export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string
   }
 
   return Promise.resolve(recipes as Recipe[]);
+}
+
+export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/quiz-game/questions?roomId=${id}`);
+  const questions = response.data;
+
+  if (!questions) {
+    throw new Error('Questions not found');
+  }
+
+  return Promise.resolve(questions as IQA[]);
 }

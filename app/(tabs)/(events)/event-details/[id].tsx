@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -9,13 +10,13 @@ import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
-import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function EventDetails() {
   const { id, favorite } = useLocalSearchParams();
+  const [token, setToken] = useState<string>('');
   const [isFavorite, setIsFavorite] = useState(favorite || false);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -68,6 +69,14 @@ export default function EventDetails() {
     queryFn: fetchEventVouchers,
     enabled: !!data,
   });
+
+  useEffect(() => {
+    async function getToken() {
+      const userToken = (await AsyncStorage.getItem('token')) || '';
+      setToken(userToken);
+    }
+    getToken();
+  }, []);
 
   if (!data) {
     return null;
@@ -174,15 +183,19 @@ export default function EventDetails() {
               className='rounded bg-primary'
               disabled={data?.gameId === null}
               onPress={() => {
-                data?.gameId === SHAKE_GAME_ID
-                  ? router.push({
-                      pathname: '/(shake-game)',
-                      params: { eventId: id },
-                    })
-                  : router.push({
-                      pathname: '/(quiz-game)',
-                      params: { eventId: id },
-                    });
+                router.push({
+                  pathname: '/(quiz-game)',
+                  params: { eventId: id, token },
+                });
+                // data?.gameId === SHAKE_GAME_ID
+                //   ? router.push({
+                //       pathname: '/(shake-game)',
+                //       params: { eventId: id },
+                //     })
+                //   : router.push({
+                //       pathname: '/(quiz-game)',
+                //       params: { eventId: id },
+                //     });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
