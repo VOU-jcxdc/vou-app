@@ -2,9 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Toast from 'react-native-toast-message';
+import useFileQuery from '~/hooks/useFileQuery';
 import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
@@ -23,12 +24,10 @@ import {
 } from './ui/dialog';
 import { Text } from './ui/text';
 
-const apiURl = process.env.EXPO_PUBLIC_API_URL;
-
 type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
   Partial<Pick<AccountsVouchers, 'assigenedOn' | 'quantity'>> & {
     isAssigned?: boolean;
-    brandInfo?: { name: string; bucketId: string };
+    brandInfo: { name: string; bucketId: string };
     onVoucherUsed?: () => void;
   };
 
@@ -86,10 +85,7 @@ export default function VoucherCard({
     Clipboard.setString(code);
   };
 
-  const imageUri =
-    brandInfo && brandInfo.bucketId
-      ? `${apiURl}/files/${brandInfo.bucketId}?${new Date().getTime()}`
-      : 'https://picsum.photos/id/1/200/300';
+  const { imageUri, isLoading } = useFileQuery(brandInfo.bucketId);
 
   const usageModeTextClsName = cn('bg-secondary px-3 py-1 rounded-2xl self-center text-sm', !isAssigned && 'mt-2');
 
@@ -97,7 +93,7 @@ export default function VoucherCard({
     <Card className='h-36'>
       <View className='flex-row gap-4 items-center'>
         <View className='h-36 w-36 bg-slate-50 flex items-center justify-center gap-2'>
-          <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
+          {isLoading ? <ActivityIndicator /> : <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />}
           <Text className='text-base font-semibold'>{brandInfo?.name || 'Brand name'}</Text>
         </View>
         <View className='flex-1'>

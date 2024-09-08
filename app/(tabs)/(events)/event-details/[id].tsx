@@ -78,7 +78,6 @@ export default function EventDetails() {
   const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
-    enabled: !!data,
   });
 
   if (!data) {
