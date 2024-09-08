@@ -4,6 +4,7 @@ import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Text } from '~/components/ui/text';
 import VoucherCard from '~/components/VoucherCard';
 import { fetchAcountVouchers } from '~/lib/api/api';
+import { getDiff } from '~/utils/DateTimeUtils';
 
 export default function Vouchers() {
   const { data, isPending, refetch } = useQuery({
@@ -19,7 +20,12 @@ export default function Vouchers() {
     return <LoadingIndicator />;
   }
 
-  if (data.length === 0) {
+  const vouchers = data.filter((voucher) => {
+    const { diff } = getDiff(voucher.assigenedOn, voucher.voucher.duration);
+    return diff > 0 && voucher;
+  });
+
+  if (vouchers.length === 0) {
     return (
       <View className='flex-1 justify-center items-center'>
         <Text className='text-2xl'>You currently have no vouchers</Text>
@@ -31,7 +37,7 @@ export default function Vouchers() {
     <SafeAreaView className='mx-4 my-6 h-full gap-4'>
       <View className='gap-4 mb-11'>
         <FlatList
-          data={data}
+          data={vouchers}
           renderItem={({ item }) => {
             const { voucher } = item;
             return (

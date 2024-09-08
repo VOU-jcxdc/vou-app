@@ -8,6 +8,8 @@ import Toast from 'react-native-toast-message';
 import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
+import { getDiff } from '~/utils/DateTimeUtils';
+import SuccessDialog from './SuccessDialog';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import {
@@ -31,12 +33,7 @@ type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration'
   };
 
 function DurationText({ assigned_on, duration }: { assigned_on: string; duration: number }) {
-  const date = new Date(assigned_on.replace(' ', 'T'));
-  date.setSeconds(date.getSeconds() + duration);
-  // count hours to expired
-  const diff = date.getTime() - Date.now();
-  const diffHours = Math.floor(diff / 3600000);
-  const diffDays = Math.floor(diff / 86400000);
+  const { date, diff, diffDays, diffHours } = getDiff(assigned_on, duration);
   if (diff > 0) {
     if (diffDays > 5) {
       return <Text className='font-medium text-sm'>{'EXP: ' + date.toLocaleDateString()}</Text>;
@@ -79,28 +76,6 @@ export default function VoucherCard({
   });
   const [open, setOpen] = useState(false);
   const [openSuccess, setOpenSuccess] = useState(false);
-
-  function SuccessDialog() {
-    return (
-      <Dialog open={openSuccess} onOpenChange={setOpenSuccess}>
-        <DialogContent className='w-96'>
-          <View className='flex gap-5 items-center'>
-            <View className=' flex items-center justify-center gap-2'>
-              <Image
-                className='rounded-full h-24 w-24'
-                source={{
-                  uri: 'https://cdn.vectorstock.com/i/500p/14/99/green-tick-marker-checkmark-circle-icon-vector-22691499.jpg',
-                }}
-              />
-            </View>
-            <View className='flex items-center'>
-              <Text className='text-base'>Sử dùng voucher thành công</Text>
-            </View>
-          </View>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
@@ -219,7 +194,7 @@ export default function VoucherCard({
           </View>
         </View>
       </View>
-      <SuccessDialog />
+      <SuccessDialog open={openSuccess} setOpen={setOpenSuccess} message='Sử dụng voucher thành công' />
     </Card>
   );
 }

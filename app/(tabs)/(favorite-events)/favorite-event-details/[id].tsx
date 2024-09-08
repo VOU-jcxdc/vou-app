@@ -1,26 +1,37 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as React from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import VoucherCard from '~/components/VoucherCard';
-import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import {
+  addFavoriteEvent,
+  fetchConfigs,
+  fetchEvent,
+  fetchEventVouchers,
+  fetchFile,
+  removeFavoriteEvent,
+} from '~/lib/api/api';
 import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function FavoriteEventDetails() {
-  const [isFavorite, setIsFavorite] = React.useState(true);
+  const [isFavorite, setIsFavorite] = useState(true);
   const { id } = useLocalSearchParams();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['favoriteEvent', id as string],
     queryFn: fetchEvent,
+  });
+  const configs = useQuery({
+    queryKey: ['configs', id as string],
+    queryFn: fetchConfigs,
   });
 
   const { data: eventImage } = useQuery({
@@ -177,11 +188,11 @@ export default function FavoriteEventDetails() {
                 data?.gameId === SHAKE_GAME_ID
                   ? router.push({
                       pathname: '/(shake-game)',
-                      params: { eventId: id },
+                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
                     })
                   : router.push({
                       pathname: '/(quiz-game)',
-                      params: { eventId: id },
+                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
                     });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>

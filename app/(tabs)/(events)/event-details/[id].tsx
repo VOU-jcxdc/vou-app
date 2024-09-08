@@ -5,11 +5,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
 import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import {
+  addFavoriteEvent,
+  fetchConfigs,
+  fetchEvent,
+  fetchEventVouchers,
+  fetchFile,
+  removeFavoriteEvent,
+} from '~/lib/api/api';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -22,6 +30,10 @@ export default function EventDetails() {
   const { data, isLoading } = useQuery({
     queryKey: ['event', id as string],
     queryFn: fetchEvent,
+  });
+  const configs = useQuery({
+    queryKey: ['configs', id as string],
+    queryFn: fetchConfigs,
   });
 
   const { data: eventImage } = useQuery({
@@ -64,7 +76,7 @@ export default function EventDetails() {
     },
   });
 
-  const { data: eventVouchers } = useQuery({
+  const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
     enabled: !!data,
@@ -82,7 +94,7 @@ export default function EventDetails() {
     return null;
   }
 
-  if (isLoading) {
+  if (isLoading || configs.isLoading) {
     return (
       <View className='aspect-video h-auto w-full items-center'>
         <ActivityIndicator />
@@ -201,6 +213,7 @@ export default function EventDetails() {
             </Button>
           </View>
         }
+        ListEmptyComponent={() => <>{isPending && <LoadingIndicator />}</>}
       />
       <Toast />
     </View>
