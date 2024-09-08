@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import * as React from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import ProfileAvatar from '~/components/ProfileAvatar';
@@ -31,7 +31,7 @@ export default function Profile() {
     enabled: !!data?.bucketId, // Only run this query if data.bucketId is available
   });
 
-  if (isPending || isLoading) return <LoadingIndicator />;
+  if (isPending) return <LoadingIndicator />;
 
   if (!data) return null;
 
@@ -45,10 +45,14 @@ export default function Profile() {
           {data ? (
             <>
               <View className='w-full items-center gap-6 mb-6'>
-                <ProfileAvatar
-                  uri={eventImage ? `${apiUrl}/files/${data.bucketId}` : 'https://picsum.photos/id/1/200/300'}
-                  alt={data?.username || ''}
-                />
+                {isLoading ? (
+                  <ActivityIndicator />
+                ) : (
+                  <ProfileAvatar
+                    uri={eventImage ? `${apiUrl}/files/${data.bucketId}` : 'https://picsum.photos/id/1/200/300'}
+                    alt={data?.username || ''}
+                  />
+                )}
                 <Text className='text-3xl font-semibold'>{data?.username}</Text>
               </View>
               <View className='w-full px-10 gap-6'>
