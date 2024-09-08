@@ -191,7 +191,7 @@ export default function EventDetails() {
                       pathname: '/(shake-game)',
                       params: {
                         eventId: id,
-                        configs: (configs.data?.eventConfig as number) || 0,
+                        configs: configs.data?.eventConfig as number,
                         gameId: data?.gameId,
                       },
                     })
@@ -199,7 +199,7 @@ export default function EventDetails() {
                       pathname: '/(quiz-game)',
                       params: {
                         eventId: id,
-                        configs: (configs.data?.eventConfig as number) || 0,
+                        configs: configs.data?.eventConfig as number,
                         gameId: data?.gameId,
                       },
                     });
