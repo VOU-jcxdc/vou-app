@@ -1,5 +1,6 @@
 enum ItemType {
   CRAFTING_MATERIAL = 'crafting_material',
+  CONFIG = 'config',
 }
 
 enum ItemStatus {

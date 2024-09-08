@@ -348,5 +348,5 @@ export async function updateConfigs(params: { eventId: string; config: number })
     eventId,
     config,
   });
-  return response;
+  return response.data;
 }

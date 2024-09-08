@@ -42,13 +42,17 @@ export default function GiftDialog({
   title,
   description,
   type,
+  eventId = '',
+  handleOnSuccessReq,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  curItem: Item;
+  curItem?: Item;
   title: string;
   description: string;
   type: 'give' | 'request';
+  eventId?: string;
+  handleOnSuccessReq?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<SearchPlayer>();
@@ -69,7 +73,7 @@ export default function GiftDialog({
       router.back();
       Toast.show({
         type: 'success',
-        text1: `Đã tặng ${curItem.name} thành công cho ${selectedUser?.username}`,
+        text1: `Đã tặng ${curItem?.name} thành công cho ${selectedUser?.username}`,
         visibilityTime: 1500,
       });
       onOpenChange(false);
@@ -82,10 +86,11 @@ export default function GiftDialog({
       queryClient.invalidateQueries({ queryKey: ['sended-requests'] });
       Toast.show({
         type: 'success',
-        text1: `Đã gửi yêu cầu ${curItem.name} thành công tới ${selectedUser?.username}`,
+        text1: `Đã gửi yêu cầu ${curItem?.name} thành công tới ${selectedUser?.username}`,
         visibilityTime: 1500,
       });
       onOpenChange(false);
+      handleOnSuccessReq && handleOnSuccessReq();
     },
   });
 
@@ -93,8 +98,8 @@ export default function GiftDialog({
     const body = {
       senderId: userId as string,
       receiverId: selectedUser?.id as string,
-      itemId: curItem.id,
-      eventId: curItem.eventId,
+      itemId: curItem ? curItem.id : eventId,
+      eventId: curItem ? curItem.eventId : eventId,
     };
     sendGiftMutation.mutate(body);
   };
@@ -103,8 +108,8 @@ export default function GiftDialog({
     const body = {
       senderId: userId as string,
       receiverId: selectedUser?.id as string,
-      itemId: curItem.id,
-      eventId: curItem.eventId,
+      itemId: curItem ? curItem.id : eventId,
+      eventId: curItem ? curItem.eventId : eventId,
       quantity: 1,
     };
     requestItemMutation.mutate(body);
