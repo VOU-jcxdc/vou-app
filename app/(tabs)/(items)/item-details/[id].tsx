@@ -36,10 +36,11 @@ function RecipeCard({
     mutationFn: combineItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account-items'] });
+      queryClient.invalidateQueries({ queryKey: ['account-vouchers'] });
       router.back();
       Toast.show({
         type: 'success',
-        text1: 'Merge successfully',
+        text1: 'Ghép thành công',
         visibilityTime: 1500,
       });
     },
@@ -70,7 +71,7 @@ function RecipeCard({
             return (
               <View className='flex flex-row items-center'>
                 <View className={itemCls}>
-                  <View className='absolute right-0 top-2 z-30'>
+                  <View className='absolute -right-2 top-2 z-30'>
                     <Text className='font-medium px-2 color-primary text-xs'>
                       {itemAccount?.quantity || 0}/{item.quantity}
                     </Text>
@@ -93,7 +94,7 @@ function RecipeCard({
           numColumns={2}
           key={`recipelist-${2}`}
         />
-        {targetType === 'item' && (
+        {targetType === 'item' ? (
           <View className='h-28 w-28 flex items-center justify-center gap-2'>
             {isLoading ? (
               <ActivityIndicator />
@@ -101,6 +102,10 @@ function RecipeCard({
               <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
             )}
             <Text className='text-sm font-semibold text-center'>{target?.name}</Text>
+          </View>
+        ) : (
+          <View className='h-28 w-28 flex items-center justify-center gap-2'>
+            <Text className='text-sm font-semibold text-center'>Voucher</Text>
           </View>
         )}
       </View>
