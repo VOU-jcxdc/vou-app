@@ -189,11 +189,19 @@ export default function EventDetails() {
                 data?.gameId === SHAKE_GAME_ID
                   ? router.push({
                       pathname: '/(shake-game)',
-                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
                     })
                   : router.push({
                       pathname: '/(quiz-game)',
-                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
                     });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>

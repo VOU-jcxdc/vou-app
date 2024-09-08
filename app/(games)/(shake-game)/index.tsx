@@ -14,7 +14,7 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ShakeGame() {
   const queryClient = useQueryClient();
-  const { eventId, configs } = useLocalSearchParams();
+  const { eventId, configs, gameId } = useLocalSearchParams();
   const [config, setConfig] = useState<number>(+configs);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [item, setItem] = useState<Item | null>(null);
