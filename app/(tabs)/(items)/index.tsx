@@ -16,6 +16,7 @@ import {
   rejectRequest,
   searchPlayers,
 } from '~/lib/api/api';
+import { ItemType } from '~/lib/interfaces';
 import { getTimeDifference } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -84,6 +85,7 @@ export default function Gifts() {
         data={accountItems}
         renderItem={({ item }) => {
           const itemInfo = item.item;
+          if (itemInfo.type == ItemType.CONFIG) return null;
           return (
             <Pressable
               className='flex-1'
@@ -93,7 +95,12 @@ export default function Gifts() {
                   params: { id: itemInfo.id, accountItems: JSON.stringify(accountItems) },
                 })
               }>
-              <ItemCard id={itemInfo.id} name={itemInfo.name} quantity={item.quantity} imageId={itemInfo.imageId} />
+              <ItemCard
+                id={itemInfo.id}
+                name={itemInfo.name}
+                originalQuantity={item.quantity}
+                imageId={itemInfo.imageId}
+              />
             </Pressable>
           );
         }}
@@ -118,62 +125,63 @@ export default function Gifts() {
     </>
   );
 
-  const renderFooter = () => <Toast />;
-
   const renderRequests = () => {
     if (tab === 'received') {
       return receivedReqPending ? (
         <LoadingIndicator />
       ) : (
-        <FlatList
-          data={receivedRequests}
-          renderItem={({ item }) => {
-            const player = players?.find((player) => player.id === item.senderId);
-            const imageUri = item.item.imageId
-              ? `${apiURl}/files/${item.item.imageId}?${new Date().getTime()}`
-              : 'https://picsum.photos/id/1/200/300';
+        <>
+          <FlatList
+            data={receivedRequests}
+            renderItem={({ item }) => {
+              const player = players?.find((player) => player.id === item.senderId);
+              const imageUri = item.item.imageId
+                ? `${apiURl}/files/${item.item.imageId}?${new Date().getTime()}`
+                : 'https://picsum.photos/id/1/200/300';
 
-            return (
-              <View className='flex-row gap-4 items-center py-4'>
-                <View className='flex-col items-center w-32 gap-1'>
-                  <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
-                  <Text className='text-base font-semibold text-center'>{item.item.name}</Text>
-                </View>
-                <View className='flex-col gap-1 flex-1' key={item.id}>
-                  <View className='flex flex-row justify-between items-center'>
-                    <Text className='text-lg font-semibold'>{player?.username}</Text>
-                    <Text className='text-muted-foreground text-sm'>{getTimeDifference(item.sendDate)}</Text>
+              return (
+                <View className='flex-row gap-4 items-center py-4'>
+                  <View className='flex-col items-center w-32 gap-1'>
+                    <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
+                    <Text className='text-base font-semibold text-center'>{item.item.name}</Text>
                   </View>
-                  <Text className='text-muted-foreground text-wrap pb-1'>{player?.email}</Text>
-                  <View className='flex-row gap-2 w-full'>
-                    <Button
-                      variant='default'
-                      size='sm'
-                      className='flex-grow'
-                      onPress={() => acceptReqMutation.mutate({ id: item.id })}>
-                      <Text>Accept</Text>
-                    </Button>
-                    <Button
-                      variant='secondary'
-                      size='sm'
-                      className='flex-grow'
-                      onPress={() => declineReqMutation.mutate({ id: item.id })}>
-                      <Text>Decline</Text>
-                    </Button>
+                  <View className='flex-col gap-1 flex-1' key={item.id}>
+                    <View className='flex flex-row justify-between items-center'>
+                      <Text className='text-lg font-semibold'>{player?.username}</Text>
+                      <Text className='text-muted-foreground text-sm'>{getTimeDifference(item.sendDate)}</Text>
+                    </View>
+                    <Text className='text-muted-foreground text-wrap pb-1'>{player?.email}</Text>
+                    <View className='flex-row gap-2 w-full'>
+                      <Button
+                        variant='default'
+                        size='sm'
+                        className='flex-grow'
+                        onPress={() => acceptReqMutation.mutate({ id: item.id })}>
+                        <Text>Accept</Text>
+                      </Button>
+                      <Button
+                        variant='secondary'
+                        size='sm'
+                        className='flex-grow'
+                        onPress={() => declineReqMutation.mutate({ id: item.id })}>
+                        <Text>Decline</Text>
+                      </Button>
+                    </View>
                   </View>
                 </View>
+              );
+            }}
+            key={`flatlist-${4}`}
+            keyExtractor={(item) => item.id}
+            ItemSeparatorComponent={() => <View className='border-b-2 border-b-gray-200' />}
+            ListEmptyComponent={() => (
+              <View>
+                <Text className='text-lg'>No results found</Text>
               </View>
-            );
-          }}
-          key={`flatlist-${4}`}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View className='border-b-2 border-b-gray-200' />}
-          ListEmptyComponent={() => (
-            <View>
-              <Text className='text-lg'>No results found</Text>
-            </View>
-          )}
-        />
+            )}
+          />
+          <Toast />
+        </>
       );
     } else {
       return sendedReqPending ? (
@@ -217,7 +225,6 @@ export default function Gifts() {
       <FlatList
         data={[]}
         ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
         renderItem={null}
         ListEmptyComponent={renderRequests}
         className='mx-4 my-6'

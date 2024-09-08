@@ -29,6 +29,7 @@ export default function Inventory() {
           data={data}
           numColumns={2}
           renderItem={({ item }) => {
+            if (!item.quantity) return null;
             return (
               <Pressable
                 className='flex-1'

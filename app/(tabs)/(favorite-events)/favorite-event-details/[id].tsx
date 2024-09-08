@@ -77,7 +77,6 @@ export default function FavoriteEventDetails() {
   const { data: eventVouchers } = useQuery({
     queryKey: ['favorite-event-vouchers', id as string],
     queryFn: fetchEventVouchers,
-    enabled: !!data,
   });
 
   if (!data) {
