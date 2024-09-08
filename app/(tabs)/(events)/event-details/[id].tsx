@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
+import { FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 
@@ -80,7 +80,6 @@ export default function EventDetails() {
   const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
-    enabled: !!data,
   });
 
   useEffect(() => {
@@ -96,11 +95,7 @@ export default function EventDetails() {
   }
 
   if (isLoading || configs.isLoading) {
-    return (
-      <View className='aspect-video h-auto w-full items-center'>
-        <ActivityIndicator />
-      </View>
-    );
+    return <LoadingIndicator />;
   }
 
   const { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent } = getEventDateInfo(
@@ -125,7 +120,9 @@ export default function EventDetails() {
               <Image
                 className='h-full w-full object-cover'
                 source={{
-                  uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+                  uri: eventImage
+                    ? `${apiURl}/files/${data.images[0]}?${new Date().getTime()}`
+                    : 'https://picsum.photos/id/1/200/300',
                 }}
               />
             </View>

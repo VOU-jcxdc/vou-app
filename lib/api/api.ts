@@ -352,6 +352,17 @@ export async function updateConfigs(params: { eventId: string; config: number })
   return response.data;
 }
 
+export async function combineItem({ id }: { id: string }) {
+  try {
+    const response = await doPost(`${apiUrl}/items/combine-items`, { id });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error combining item:', error);
+    throw new Error('Error combining item');
+  }
+}
+
 export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
   const [, id] = queryKey;
 

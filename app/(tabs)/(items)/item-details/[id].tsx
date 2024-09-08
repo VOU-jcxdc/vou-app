@@ -1,14 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
-import { FlatList, Image, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import GiftDialog from '~/components/GiftDialog';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
-import { fetchRecipesItem } from '~/lib/api/api';
+import useFileQuery from '~/hooks/useFileQuery';
+import { combineItem, fetchRecipesItem } from '~/lib/api/api';
 import { AccountItemsResponse } from '~/lib/interfaces/item';
 import { Recipe } from '~/lib/interfaces/recipe';
 import { cn } from '~/lib/utils';
@@ -16,19 +18,37 @@ import { cn } from '~/lib/utils';
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 function RecipeCard({
+  id,
   itemRecipe,
   target,
   targetType,
   accountItems,
-}: Pick<Recipe, 'itemRecipe' | 'target' | 'targetType'> & { accountItems: AccountItemsResponse[] }) {
-  const imageUri = target?.imageId
-    ? `${apiURl}/files/${target.imageId}?${new Date().getTime()}`
-    : 'https://picsum.photos/id/1/200/300';
+}: Pick<Recipe, 'id' | 'itemRecipe' | 'target' | 'targetType'> & { accountItems: AccountItemsResponse[] }) {
+  const { imageUri, isLoading } = useFileQuery(target?.imageId);
+  const queryClient = useQueryClient();
 
   const isMergeable = itemRecipe.every((item) => {
     const itemAccount = accountItems.find((accItem) => accItem.item.id === item.itemId);
     return (itemAccount?.quantity ?? 0) >= item.quantity;
   });
+
+  const mergeMutation = useMutation({
+    mutationFn: combineItem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account-items'] });
+      queryClient.invalidateQueries({ queryKey: ['account-vouchers'] });
+      router.back();
+      Toast.show({
+        type: 'success',
+        text1: 'Ghép thành công',
+        visibilityTime: 1500,
+      });
+    },
+  });
+
+  const handleMergePress = () => {
+    mergeMutation.mutate({ id });
+  };
 
   return (
     <Card>
@@ -51,7 +71,7 @@ function RecipeCard({
             return (
               <View className='flex flex-row items-center'>
                 <View className={itemCls}>
-                  <View className='absolute right-0 top-2 z-30'>
+                  <View className='absolute -right-2 top-2 z-30'>
                     <Text className='font-medium px-2 color-primary text-xs'>
                       {itemAccount?.quantity || 0}/{item.quantity}
                     </Text>
@@ -74,14 +94,22 @@ function RecipeCard({
           numColumns={2}
           key={`recipelist-${2}`}
         />
-        {targetType === 'item' && (
+        {targetType === 'item' ? (
           <View className='h-28 w-28 flex items-center justify-center gap-2'>
-            <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
+            {isLoading ? (
+              <ActivityIndicator />
+            ) : (
+              <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
+            )}
             <Text className='text-sm font-semibold text-center'>{target?.name}</Text>
+          </View>
+        ) : (
+          <View className='h-28 w-28 flex items-center justify-center gap-2'>
+            <Text className='text-sm font-semibold text-center'>Voucher</Text>
           </View>
         )}
       </View>
-      <Button className='m-1' disabled={!isMergeable}>
+      <Button className='m-1' disabled={!isMergeable} onPress={handleMergePress}>
         <Text className='text-lg'>Ghép ngay</Text>
       </Button>
     </Card>
@@ -141,6 +169,7 @@ export default function ItemDetails() {
         data={data}
         renderItem={({ item }) => (
           <RecipeCard
+            id={item.id}
             itemRecipe={item.itemRecipe}
             target={item.target}
             targetType={item.targetType}

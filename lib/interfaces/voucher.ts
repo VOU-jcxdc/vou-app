@@ -26,7 +26,7 @@ interface Voucher {
   duration: number;
   createdOn: string;
   updatedOn: string;
-  brandInfo?: BrandInfo;
+  brandInfo: BrandInfo;
   usageMode: VoucherUsageMode;
 }
 
