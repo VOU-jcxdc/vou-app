@@ -34,36 +34,6 @@ const players = [
     image: 'https://picsum.photos/id/237/200/200',
     score: 100,
   },
-  {
-    id: '6',
-    name: 'Jane Doe',
-    image: 'https://picsum.photos/id/237/200/200',
-    score: 100,
-  },
-  {
-    id: '7',
-    name: 'John Doe',
-    image: 'https://picsum.photos/id/237/200/200',
-    score: 100,
-  },
-  {
-    id: '8',
-    name: 'Jane Doe',
-    image: 'https://picsum.photos/id/237/200/200',
-    score: 100,
-  },
-  {
-    id: '9',
-    name: 'John Doe',
-    image: 'https://picsum.photos/id/237/200/200',
-    score: 100,
-  },
-  {
-    id: '10',
-    name: 'Jane Doe',
-    image: 'https://picsum.photos/id/237/200/200',
-    score: 100,
-  },
 ];
 
 export default function LeaderboardScreen() {

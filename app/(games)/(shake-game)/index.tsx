@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
+import { Linking, Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
+import GiftDialog from '~/components/GiftDialog';
 import ShakeItemModal from '~/components/ShakeItemModal';
+import { Button } from '~/components/ui/button';
 import { fetchItem, updateConfigs } from '~/lib/api/api';
 import { Item } from '~/lib/interfaces';
 
@@ -12,14 +14,16 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ShakeGame() {
   const queryClient = useQueryClient();
-  const { eventId, configs } = useLocalSearchParams();
+  const { eventId, configs, gameId } = useLocalSearchParams();
   const [config, setConfig] = useState<number>(+configs);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [item, setItem] = useState<Item | null>(null);
+  const [open, setOpen] = useState(false);
   const configMutation = useMutation({
     mutationFn: (configs: number) => updateConfigs({ eventId: eventId as string, config: configs }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['configs'] });
+      setConfig(data.eventConfig);
     },
     onError: (error) => {
       console.error(error);
@@ -67,6 +71,27 @@ export default function ShakeGame() {
     }
   };
 
+  const handleGainConfig = () => {
+    configMutation.mutate(1);
+  };
+
+  const handleShare = () => {
+    const url =
+      'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent('https://vou.netlify.app/');
+    const fbUrl = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
+
+    Linking.canOpenURL(fbUrl)
+      .then((supported) => {
+        handleGainConfig();
+        if (supported) {
+          return Linking.openURL(fbUrl);
+        } else {
+          return Linking.openURL(url);
+        }
+      })
+      .catch((err) => console.error('An error occurred', err));
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View className=' p-10 items-center justify-center flex-1'>
@@ -75,6 +100,25 @@ export default function ShakeGame() {
         <Text className='text-4xl font-semibold'>Shake your phone!</Text>
         <Ionicons className='my-4' name='phone-portrait-outline' size={60} color='black' />
         <Text className='text-2xl font-semibold'>{config} shakes left</Text>
+        {!config && (
+          <View className='flex flex-row items-center justify-center'>
+            <Button
+              variant='link'
+              size='sm'
+              onPress={() => {
+                setOpen(true);
+              }}>
+              <Text className='text-primary underline'>Request friend</Text>
+            </Button>
+            <Text> or </Text>
+            <Button variant='link' size='sm'>
+              <Text className='text-primary underline' onPress={handleShare}>
+                Share to facebook
+              </Text>
+            </Button>
+            <Text> to gain config.</Text>
+          </View>
+        )}
 
         <View className='grow' />
 
@@ -93,12 +137,22 @@ export default function ShakeGame() {
         modalVisible={modalVisible}
         onBackPress={() => {
           setModalVisible(false);
-          setConfig(config - 1);
         }}
         id={item?.id || ''}
         name={item?.name || 'Item'}
         image={`${apiUrl}/files/${item?.imageId}` || 'https://picsum.photos/id/106/200/300'}
       />
+      {open && (
+        <GiftDialog
+          open={open}
+          onOpenChange={setOpen}
+          title='Request config'
+          description='Request your friend to gain a config for playing this game.'
+          type='request'
+          eventId={eventId as string}
+          handleOnSuccessReq={handleGainConfig}
+        />
+      )}
     </SafeAreaView>
   );
 }

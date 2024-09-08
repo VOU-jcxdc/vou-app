@@ -1,5 +1,6 @@
 enum ItemType {
   CRAFTING_MATERIAL = 'crafting_material',
+  CONFIG = 'config',
 }
 
 enum ItemStatus {
@@ -21,6 +22,7 @@ interface Item {
   createdOn: string;
   updatedOn: string;
   quantity: number;
+  originalQuantity: number;
 }
 
 interface AccountItems {

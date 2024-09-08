@@ -18,6 +18,7 @@ import {
   fetchFile,
   removeFavoriteEvent,
 } from '~/lib/api/api';
+import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
@@ -193,21 +194,26 @@ export default function EventDetails() {
           <View className='w-full px-4 py-4'>
             <Button
               className='rounded bg-primary'
-              disabled={data?.gameId === null}
+              // disabled={data?.gameId === null}
               onPress={() => {
-                router.push({
-                  pathname: '/(quiz-game)',
-                  params: { eventId: id, token },
-                });
-                // data?.gameId === SHAKE_GAME_ID
-                //   ? router.push({
-                //       pathname: '/(shake-game)',
-                //       params: { eventId: id },
-                //     })
-                //   : router.push({
-                //       pathname: '/(quiz-game)',
-                //       params: { eventId: id },
-                //     });
+                data?.gameId === SHAKE_GAME_ID
+                  ? router.push({
+                      pathname: '/(shake-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
+                    })
+                  : router.push({
+                      pathname: '/(quiz-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                        token,
+                      },
+                    });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>

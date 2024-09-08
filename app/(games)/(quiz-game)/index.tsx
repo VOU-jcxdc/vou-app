@@ -100,13 +100,13 @@ export default function QuizGameRoom() {
     });
 
     return () => {
-      socket.removeAllListeners('connect');
-      socket.removeAllListeners('waiting-players');
-      socket.removeAllListeners('player-joined');
-      socket.removeAllListeners('game-start');
-      socket.removeAllListeners('start-question');
-      socket.removeAllListeners('answer-question');
-      socket.removeAllListeners('show-answer');
+      socket.off('connect');
+      socket.off('waiting-players');
+      socket.off('player-joined');
+      socket.off('game-start');
+      socket.off('start-question');
+      socket.off('answer-question');
+      socket.off('show-answer');
       socket.disconnect();
     };
   }, [token]);
