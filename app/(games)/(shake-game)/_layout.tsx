@@ -14,12 +14,33 @@ export default function ShakeGameLayout() {
               <Ionicons name='arrow-back' size={24} />
             </Pressable>
           ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: '/instruction',
+                });
+              }}>
+              <Ionicons name='information-circle-outline' size={32} />
+            </Pressable>
+          ),
         }}
       />
       <Stack.Screen
         name='inventory'
         options={{
           title: 'Event Items',
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name='arrow-back' size={24} />
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name='instruction'
+        options={{
+          title: 'Instruction',
           headerLeft: () => (
             <Pressable onPress={() => router.back()}>
               <Ionicons name='arrow-back' size={24} />

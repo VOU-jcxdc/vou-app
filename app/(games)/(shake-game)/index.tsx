@@ -1,21 +1,41 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { QueryFunctionContext, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
+import { ActivityIndicator, Pressable, SafeAreaView, Text, Vibration, View } from 'react-native';
 import ShakeItemModal from '~/components/ShakeItemModal';
 import { fetchItem, updateConfigs } from '~/lib/api/api';
 import { Item } from '~/lib/interfaces';
+import { doGet } from '~/utils/APIRequest';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
+//Generate a dummy data 10-line long instruction with '\n' as the line break
+
+export async function fetchShakeGame({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, eventId, gameId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/games/${gameId}`);
+  const gameInfo = response.data;
+
+  if (!gameInfo) {
+    throw new Error('Game not found');
+  }
+
+  return Promise.resolve(gameInfo as any);
+}
+
 export default function ShakeGame() {
   const queryClient = useQueryClient();
-  const { eventId, configs } = useLocalSearchParams();
+  const { eventId, configs, gameId } = useLocalSearchParams();
   const [config, setConfig] = useState<number>(+configs);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [item, setItem] = useState<Item | null>(null);
+  const { data, isLoading } = useQuery({
+    queryKey: ['shake-game', eventId as string, gameId as string],
+    queryFn: fetchShakeGame,
+  });
   const configMutation = useMutation({
     mutationFn: (configs: number) => updateConfigs({ eventId: eventId as string, config: configs }),
     onSuccess: () => {
@@ -66,6 +86,10 @@ export default function ShakeGame() {
       Vibration.vibrate();
     }
   };
+
+  if (isLoading) {
+    return <ActivityIndicator />;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
