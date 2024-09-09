@@ -7,11 +7,14 @@ import {
   EventsResponse,
   EventsVouchersResponse,
   FavoriteEventsResponse,
+  IQA,
   Item,
+  SearchPlayer,
   User,
 } from '~/lib/interfaces';
 import { doDelete, doGet, doPost, doPut, doPutImage } from '~/utils/APIRequest';
 
+import { RequestItemRequest, RequestResponse, SendGiftRequest } from '../interfaces/gift';
 import { PresignedUrl } from '../interfaces/image';
 import { AccountItemsResponse } from '../interfaces/item';
 import { Recipe } from '../interfaces/recipe';
@@ -245,4 +248,143 @@ export async function fetchRecipesItem({ queryKey }: QueryFunctionContext<string
   }
 
   return Promise.resolve(recipes as Recipe[]);
+}
+
+export async function searchPlayers({ queryKey }: QueryFunctionContext<string[]>): Promise<SearchPlayer[]> {
+  const [, keySearch] = queryKey;
+  const offset = 0;
+
+  const response = await doGet(`${apiUrl}/users?offset=${offset}&limit=${LIMIT}&role=player&keySearch=${keySearch}`);
+  const users = response.data.accounts;
+
+  if (!users) {
+    throw new Error('Users not found');
+  }
+
+  return Promise.resolve(users as SearchPlayer[]);
+}
+
+export async function sendGift(body: SendGiftRequest) {
+  try {
+    const response = await doPost(`${apiUrl}/gifts/sending`, body);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error sending gift:', error);
+    throw new Error('Error sending gift');
+  }
+}
+
+export async function requestItem(body: RequestItemRequest) {
+  try {
+    const response = await doPost(`${apiUrl}/gifts`, body);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting item:', error);
+    throw new Error('Error requesting item');
+  }
+}
+
+export async function fetchReceivedRequests(): Promise<RequestResponse[]> {
+  const response = await doGet(`${apiUrl}/gifts/received-requests`);
+  const requests = response.data;
+
+  if (!requests) {
+    throw new Error('Received requests not found');
+  }
+
+  return Promise.resolve(requests as RequestResponse[]);
+}
+
+export async function fetchSendedRequests(): Promise<RequestResponse[]> {
+  const response = await doGet(`${apiUrl}/gifts/sent-requests`);
+  const requests = response.data;
+
+  if (!requests) {
+    throw new Error('Sended requests not found');
+  }
+
+  return Promise.resolve(requests as RequestResponse[]);
+}
+
+export async function acceptRequest({ id }: { id: string }) {
+  try {
+    const response = await doPut(`${apiUrl}/gifts/${id}`, {});
+
+    return response.data;
+  } catch (error) {
+    console.error('Error accepting request:', error);
+    throw new Error('Error accepting request');
+  }
+}
+
+export async function rejectRequest({ id }: { id: string }) {
+  try {
+    const response = await doDelete(`${apiUrl}/gifts/${id}`);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting request:', error);
+    throw new Error('Error rejecting request');
+  }
+}
+
+export async function fetchConfigs({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${id}/configs`);
+  const config = response.data;
+
+  if (!config) {
+    throw new Error('Event not found');
+  }
+
+  return Promise.resolve(config as any);
+}
+
+export async function updateConfigs(params: { eventId: string; config: number }): Promise<any> {
+  const { eventId, config } = params;
+  const response = await doPost(`${apiUrl}/events/configs`, {
+    eventId,
+    config,
+  });
+  return response.data;
+}
+
+export async function combineItem({ id }: { id: string }) {
+  try {
+    const response = await doPost(`${apiUrl}/items/combine-items`, { id });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error combining item:', error);
+    throw new Error('Error combining item');
+  }
+}
+
+export async function fetchRoomGame({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, eventId, gameId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/games/${gameId}`);
+  const room = response.data;
+
+  if (!room) {
+    throw new Error('Room not found');
+  }
+
+  return Promise.resolve(room as any);
+}
+
+export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/quiz-game/questions?roomId=${id}`);
+  const questions = response.data;
+
+  if (!questions) {
+    throw new Error('Questions not found');
+  }
+
+  return Promise.resolve(questions as IQA[]);
 }

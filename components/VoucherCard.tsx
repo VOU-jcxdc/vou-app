@@ -2,12 +2,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Toast from 'react-native-toast-message';
+import useFileQuery from '~/hooks/useFileQuery';
 import { updateUsedVoucher } from '~/lib/api/api';
 import { AccountsVouchers, Voucher, VoucherUsageMode } from '~/lib/interfaces';
 import { cn } from '~/lib/utils';
+import { getDiff } from '~/utils/DateTimeUtils';
+import SuccessDialog from './SuccessDialog';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import {
@@ -21,22 +24,15 @@ import {
 } from './ui/dialog';
 import { Text } from './ui/text';
 
-const apiURl = process.env.EXPO_PUBLIC_API_URL;
-
 type VoucherCardProps = Pick<Voucher, 'id' | 'name' | 'description' | 'duration' | 'usageMode' | 'code'> &
   Partial<Pick<AccountsVouchers, 'assigenedOn' | 'quantity'>> & {
     isAssigned?: boolean;
-    brandInfo?: { name: string; bucketId: string };
+    brandInfo: { name: string; bucketId: string };
     onVoucherUsed?: () => void;
   };
 
 function DurationText({ assigned_on, duration }: { assigned_on: string; duration: number }) {
-  const date = new Date(assigned_on.replace(' ', 'T'));
-  date.setSeconds(date.getSeconds() + duration);
-  // count hours to expired
-  const diff = date.getTime() - Date.now();
-  const diffHours = Math.floor(diff / 3600000);
-  const diffDays = Math.floor(diff / 86400000);
+  const { date, diff, diffDays, diffHours } = getDiff(assigned_on, duration);
   if (diff > 0) {
     if (diffDays > 5) {
       return <Text className='font-medium text-sm'>{'EXP: ' + date.toLocaleDateString()}</Text>;
@@ -80,28 +76,6 @@ export default function VoucherCard({
   const [open, setOpen] = useState(false);
   const [openSuccess, setOpenSuccess] = useState(false);
 
-  function SuccessDialog() {
-    return (
-      <Dialog open={openSuccess} onOpenChange={setOpenSuccess}>
-        <DialogContent className='w-96'>
-          <View className='flex gap-5 items-center'>
-            <View className=' flex items-center justify-center gap-2'>
-              <Image
-                className='rounded-full h-24 w-24'
-                source={{
-                  uri: 'https://cdn.vectorstock.com/i/500p/14/99/green-tick-marker-checkmark-circle-icon-vector-22691499.jpg',
-                }}
-              />
-            </View>
-            <View className='flex items-center'>
-              <Text className='text-base'>Sử dùng voucher thành công</Text>
-            </View>
-          </View>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   const handleDone = () => {
     usedVoucherMutation.mutate({ id });
     setOpenSuccess(true);
@@ -111,10 +85,7 @@ export default function VoucherCard({
     Clipboard.setString(code);
   };
 
-  const imageUri =
-    brandInfo && brandInfo.bucketId
-      ? `${apiURl}/files/${brandInfo.bucketId}?${new Date().getTime()}`
-      : 'https://picsum.photos/id/1/200/300';
+  const { imageUri, isLoading } = useFileQuery(brandInfo.bucketId);
 
   const usageModeTextClsName = cn('bg-secondary px-3 py-1 rounded-2xl self-center text-sm', !isAssigned && 'mt-2');
 
@@ -122,7 +93,7 @@ export default function VoucherCard({
     <Card className='h-36'>
       <View className='flex-row gap-4 items-center'>
         <View className='h-36 w-36 bg-slate-50 flex items-center justify-center gap-2'>
-          <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />
+          {isLoading ? <ActivityIndicator /> : <Image className='rounded-full h-12 w-12' source={{ uri: imageUri }} />}
           <Text className='text-base font-semibold'>{brandInfo?.name || 'Brand name'}</Text>
         </View>
         <View className='flex-1'>
@@ -219,7 +190,7 @@ export default function VoucherCard({
           </View>
         </View>
       </View>
-      <SuccessDialog />
+      <SuccessDialog open={openSuccess} setOpen={setOpenSuccess} message='Sử dụng voucher thành công' />
     </Card>
   );
 }

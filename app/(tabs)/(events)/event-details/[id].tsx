@@ -1,26 +1,40 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
+import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Skeleton } from '~/components/ui/skeleton';
-import VoucherCard from '~/components/VoucherCard';
-import { addFavoriteEvent, fetchEvent, fetchEventVouchers, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import {
+  addFavoriteEvent,
+  fetchConfigs,
+  fetchEvent,
+  fetchEventVouchers,
+  fetchFile,
+  removeFavoriteEvent,
+} from '~/lib/api/api';
+import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function EventDetails() {
   const { id, favorite } = useLocalSearchParams();
+  const [token, setToken] = useState<string>('');
   const [isFavorite, setIsFavorite] = useState(favorite || false);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['event', id as string],
     queryFn: fetchEvent,
+  });
+  const configs = useQuery({
+    queryKey: ['configs', id as string],
+    queryFn: fetchConfigs,
   });
 
   const { data: eventImage } = useQuery({
@@ -63,26 +77,25 @@ export default function EventDetails() {
     },
   });
 
-  const { data: eventVouchers } = useQuery({
+  const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
-    enabled: !!data,
   });
+
+  useEffect(() => {
+    async function getToken() {
+      const userToken = (await AsyncStorage.getItem('token')) || '';
+      setToken(userToken);
+    }
+    getToken();
+  }, []);
 
   if (!data) {
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <View className='aspect-video h-auto w-full items-center'>
-        <Skeleton className='mb-4 h-full w-full' />
-        <Skeleton className='mb-4 h-12 w-[368px]' />
-        <Skeleton className='mb-4 h-16 w-[368px]' />
-        <Skeleton className='mb-4 h-40 w-[368px]' />
-        <Skeleton className='h-screen w-[368px]' />
-      </View>
-    );
+  if (isLoading || configs.isLoading) {
+    return <LoadingIndicator />;
   }
 
   const { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent } = getEventDateInfo(
@@ -107,7 +120,9 @@ export default function EventDetails() {
               <Image
                 className='h-full w-full object-cover'
                 source={{
-                  uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+                  uri: eventImage
+                    ? `${apiURl}/files/${data.images[0]}?${new Date().getTime()}`
+                    : 'https://picsum.photos/id/1/200/300',
                 }}
               />
             </View>
@@ -176,16 +191,32 @@ export default function EventDetails() {
           <View className='w-full px-4 py-4'>
             <Button
               className='rounded bg-primary'
+              disabled={data?.gameId === null}
               onPress={() => {
-                router.push({
-                  pathname: '/(shake-game)',
-                  params: { eventId: id },
-                });
+                data?.gameId === SHAKE_GAME_ID
+                  ? router.push({
+                      pathname: '/(shake-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
+                    })
+                  : router.push({
+                      pathname: '/(quiz-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                        token,
+                      },
+                    });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
           </View>
         }
+        ListEmptyComponent={() => <>{isPending && <LoadingIndicator />}</>}
       />
       <Toast />
     </View>

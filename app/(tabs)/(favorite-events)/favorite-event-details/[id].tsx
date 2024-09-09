@@ -1,25 +1,40 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
-import * as React from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
+import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Skeleton } from '~/components/ui/skeleton';
-import { addFavoriteEvent, fetchEvent, fetchFile, removeFavoriteEvent } from '~/lib/api/api';
+import {
+  addFavoriteEvent,
+  fetchConfigs,
+  fetchEvent,
+  fetchEventVouchers,
+  fetchFile,
+  removeFavoriteEvent,
+} from '~/lib/api/api';
+import { SHAKE_GAME_ID } from '~/lib/constants';
 import { getEventDateInfo } from '~/utils/DateTimeUtils';
 
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function FavoriteEventDetails() {
-  const [isFavorite, setIsFavorite] = React.useState(true);
   const { id } = useLocalSearchParams();
+  const [token, setToken] = useState<string>('');
+  const [isFavorite, setIsFavorite] = useState(true);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['favoriteEvent', id as string],
     queryFn: fetchEvent,
+  });
+  const configs = useQuery({
+    queryKey: ['configs', id as string],
+    queryFn: fetchConfigs,
   });
 
   const { data: eventImage } = useQuery({
@@ -62,20 +77,25 @@ export default function FavoriteEventDetails() {
     },
   });
 
+  const { data: eventVouchers, isPending } = useQuery({
+    queryKey: ['favorite-event-vouchers', id as string],
+    queryFn: fetchEventVouchers,
+  });
+
+  useEffect(() => {
+    async function getToken() {
+      const userToken = (await AsyncStorage.getItem('token')) || '';
+      setToken(userToken);
+    }
+    getToken();
+  }, []);
+
   if (!data) {
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <View className='aspect-video h-auto w-full items-center'>
-        <Skeleton className='mb-4 h-full w-full' />
-        <Skeleton className='mb-4 h-12 w-[368px]' />
-        <Skeleton className='mb-4 h-16 w-[368px]' />
-        <Skeleton className='mb-4 h-40 w-[368px]' />
-        <Skeleton className='h-screen w-[368px]' />
-      </View>
-    );
+  if (isLoading || configs.isLoading) {
+    return <LoadingIndicator />;
   }
 
   const { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent } = getEventDateInfo(
@@ -93,54 +113,111 @@ export default function FavoriteEventDetails() {
 
   return (
     <View className='flex-1 gap-4'>
-      <ScrollView>
-        <View className='aspect-video'>
-          <Image
-            className='h-full w-full object-cover'
-            source={{
-              uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
-            }}
-          />
-        </View>
-        <View className='gap-3 p-5'>
-          <View className='flex flex-row items-center justify-between'>
-            <View className='gap-2'>
-              <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
-                <Text className={isCurrent ? 'text-green-600' : 'text-secondary-foreground'}>
-                  {isCurrent ? 'Happening event' : 'In-coming event'}
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <View className='aspect-video'>
+              <Image
+                className='h-full w-full object-cover'
+                source={{
+                  uri: eventImage
+                    ? `${apiURl}/files/${data.images[0]}?${new Date().getTime()}`
+                    : 'https://picsum.photos/id/1/200/300',
+                }}
+              />
+            </View>
+            <View className='gap-3 m-4'>
+              <View className='flex flex-row items-center justify-between'>
+                <View className='gap-2'>
+                  <Badge className={isCurrent ? 'bg-green-200' : 'bg-slate-200'}>
+                    <Text className={isCurrent ? 'text-green-600' : 'text-secondary-foreground'}>
+                      {isCurrent ? 'Happening event' : 'In-coming event'}
+                    </Text>
+                  </Badge>
+                  <Text>
+                    {beginDate} - {endDate}
+                  </Text>
+                </View>
+                <View className='flex flex-row gap-2'>
+                  <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
+                    <Ionicons
+                      name={isFavorite ? 'heart' : 'heart-outline'}
+                      size={24}
+                      color={isFavorite ? 'red' : 'black'}
+                    />
+                  </Button>
+                </View>
+              </View>
+              <View className='gap-3'>
+                <Text className='text-3xl font-bold'>{data?.name}</Text>
+                <Text>{data?.description}</Text>
+              </View>
+              <View className='gap-2'>
+                <Text className='text-xl font-bold'>Event Time</Text>
+                <Text>
+                  From {beginTimestamp + ' ' + beginDate} to {endTimestamp + ' ' + endDate}
                 </Text>
-              </Badge>
-              <Text>
-                {beginDate} - {endDate}
-              </Text>
+              </View>
+              {eventVouchers && eventVouchers.length > 0 && (
+                <View className='gap-2'>
+                  <Text className='text-xl font-bold'>Rewards</Text>
+                </View>
+              )}
             </View>
-            <View className='flex flex-row gap-2'>
-              <Button variant='outline' size='icon' className='h-12 w-12 rounded-full' onPress={handleFavorite}>
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isFavorite ? 'red' : 'black'}
-                />
-              </Button>
+          </>
+        }
+        data={eventVouchers}
+        renderItem={({ item }) => {
+          const { voucher } = item;
+          return (
+            <View className='mx-4'>
+              <VoucherCard
+                id={voucher.id}
+                name={voucher.name}
+                description={voucher.description}
+                code={voucher.code}
+                brandInfo={{ name: data.brandInfo.name, bucketId: data.brandInfo.bucketId }}
+                duration={voucher.duration}
+                usageMode={voucher.usageMode}
+                isAssigned={false}
+                quantity={item.quantity}
+              />
             </View>
+          );
+        }}
+        keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={() => <View className='h-4' />}
+        ListFooterComponent={
+          <View className='w-full px-4 py-4'>
+            <Button
+              className='rounded bg-primary'
+              disabled={data?.gameId === null}
+              onPress={() => {
+                data?.gameId === SHAKE_GAME_ID
+                  ? router.push({
+                      pathname: '/(shake-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
+                    })
+                  : router.push({
+                      pathname: '/(quiz-game)',
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                        token,
+                      },
+                    });
+              }}>
+              <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
+            </Button>
           </View>
-          <View className='gap-3'>
-            <Text className='text-3xl font-bold'>{data?.name}</Text>
-            <Text>{data?.description}</Text>
-          </View>
-          <View className='gap-2'>
-            <Text className='text-xl font-bold'>Event Time</Text>
-            <Text>
-              From {beginTimestamp + ' ' + beginDate} to {endTimestamp + ' ' + endDate}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-      <View className='w-full p-5'>
-        <Button className='rounded bg-primary' onPress={() => alert('Play Game')}>
-          <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
-        </Button>
-      </View>
+        }
+        ListEmptyComponent={() => <>{isPending && <LoadingIndicator />}</>}
+      />
       <Toast />
     </View>
   );
