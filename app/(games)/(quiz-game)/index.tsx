@@ -61,7 +61,6 @@ export default function QuizGameRoom() {
   });
 
   const roomId = gameInfo.data?.roomGame?.id;
-  console.log(roomId);
 
   const { data, isPending } = useQuery({
     queryKey: ['quiz-game-qas', roomId],
@@ -77,6 +76,8 @@ export default function QuizGameRoom() {
   }, [data]);
 
   useEffect(() => {
+    if (!roomId) return;
+    console.log('have roomId');
     const socket = io(`ws://146.190.100.11:3000/quiz-game`, {
       extraHeaders: {
         Authorization: `Bearer ${token}`,
@@ -84,6 +85,7 @@ export default function QuizGameRoom() {
       query: {
         roomId,
       },
+      transports: ['websocket'],
     });
 
     socketRef.current = socket;
@@ -100,12 +102,9 @@ export default function QuizGameRoom() {
       setNumPlayers((current: number) => current + 1);
     });
 
-    socket.on('game-start', () => {
-      setIsPlay(true);
-      setIsWaiting(false);
-    });
-
     socket.on('start-question', (data: { noQa: number }) => {
+      setIsWaiting(false);
+      setIsPlay(true);
       setIsShowAnswer(false);
       setQuestionIndex(data.noQa);
       setCurrentQuestion(listQuestionRef.current[data.noQa]);
@@ -143,7 +142,7 @@ export default function QuizGameRoom() {
       socket.off('you-win');
       socket.disconnect();
     };
-  }, [token]);
+  }, [token, roomId]);
 
   const toggleColor = (index: number | null) => {
     if (index === null) return;
@@ -165,8 +164,8 @@ export default function QuizGameRoom() {
     if (nextQuestionIndex < listQuestionRef.current.length) {
       setSelectedBox(null);
     } else {
-      setIsPlay(false);
-      // setIsFinish(true);
+      //setIsPlay(false);
+      //setIsFinish(true);
     }
   };
 
