@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { Text, View } from 'react-native';
 import io from 'socket.io-client';
+import { Button } from '~/components/ui/button';
 import { fetchQuizGameQAs } from '~/lib/api/api';
 import { IQA } from '~/lib/interfaces/qa';
 
@@ -14,9 +15,11 @@ export default function QuizGame() {
   const [isShowAnswer, setIsShowAnswer] = React.useState<boolean>(false);
   const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const listQARef = React.useRef<IQA[]>([]);
+  const socketRef = React.useRef(io(''));
 
+  const roomId = '66deabaa5e5dd940bcd22c37';
   const { data, isPending } = useQuery({
-    queryKey: ['quiz-game-qas', '66dac01dad0e2bf0d1f1ee0e'], //roomId
+    queryKey: ['quiz-game-qas', roomId], //roomId
     queryFn: fetchQuizGameQAs,
   });
 
@@ -35,9 +38,10 @@ export default function QuizGame() {
           Authorization: `Bearer ${token}`,
         },
         query: {
-          roomId: '66dac01dad0e2bf0d1f1ee0e', //roomId
+          roomId, //roomId
         },
       });
+      socketRef.current = socket;
       socket.on('connect', () => {
         console.log('connected');
       });
@@ -112,6 +116,16 @@ export default function QuizGame() {
             {index + 1}. {option}
           </Text>
         ))}
+      <Button
+        className='m-auto'
+        onPress={() =>
+          socketRef.current.emit('save-score', {
+            roomId, //roomId
+            score: 20,
+          })
+        }>
+        <Text>Answer</Text>
+      </Button>
       {countdown !== null && <Text>Time left: {countdown} seconds</Text>}
       {isShowAnswer && <Text>Answer: {currentQA?.options[currentQA.answer - 1]}</Text>}
     </View>
