@@ -191,7 +191,7 @@ export default function EventDetails() {
           <View className='w-full px-4 py-4'>
             <Button
               className='rounded bg-primary'
-              // disabled={data?.gameId === null}
+              disabled={data?.gameId === null}
               onPress={() => {
                 data?.gameId === SHAKE_GAME_ID
                   ? router.push({

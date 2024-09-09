@@ -2,22 +2,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
 import io from 'socket.io-client';
+import Player from '~/components/Player';
 import { Colors } from '~/constants/Colors';
 
-import { fetchQuizGameQAs } from '~/lib/api/api';
+import { fetchQuizGameQAs, fetchRoomGame } from '~/lib/api/api';
 import { IQA } from '~/lib/interfaces';
 import useQuizGameStore from '~/stores/quizGame';
 
 const instruction =
   'Objective: Answer as many questions correctly within the given time limit.\nGameplay:\n1. Players join the game and wait for the quiz to start.\n2. Questions are displayed one at a time, and players must select the correct answer from multiple choices.\n3. Points are awarded for each correct answer, and the faster the response, the more points are earned.\n4. The game continues until the time limit is reached or all questions are answered.\n5. The player with the highest score at the end of the game wins.\nRules:\n1. No cheating or using external help.\n2. Players must answer within the time limit for each question.';
 
+interface Player {
+  score: number;
+  player: {
+    userId: string;
+    username: string;
+    bucketId: string;
+  };
+}
+
 export default function QuizGameRoom() {
-  const { token } = useLocalSearchParams();
+  const { eventId, gameId, token } = useLocalSearchParams();
   const [countdown, setCountdown] = useState<number>(0);
   const [selectedBox, setSelectedBox] = useState<number | null>(null);
   const [showScore, setShowScore] = useState<boolean>(false);
+  const [players, setPlayers] = useState<Player[]>([]);
   const {
     isPlay,
     isWaiting,
@@ -42,10 +53,20 @@ export default function QuizGameRoom() {
   } = useQuizGameStore();
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const listQuestionRef = useRef<IQA[]>([]);
+  const socketRef = useRef(io(''));
+
+  const gameInfo = useQuery({
+    queryKey: ['room-game', eventId as string, gameId as string],
+    queryFn: fetchRoomGame,
+  });
+
+  const roomId = gameInfo.data?.roomGame?.id;
+  console.log(roomId);
 
   const { data, isPending } = useQuery({
-    queryKey: ['quiz-game-qas', '66dc3bbc35e82d9181525308'], //roomId
+    queryKey: ['quiz-game-qas', roomId],
     queryFn: fetchQuizGameQAs,
+    enabled: !!roomId,
   });
 
   useEffect(() => {
@@ -61,9 +82,11 @@ export default function QuizGameRoom() {
         Authorization: `Bearer ${token}`,
       },
       query: {
-        roomId: '66dc3bbc35e82d9181525308', //roomId
+        roomId,
       },
     });
+
+    socketRef.current = socket;
     socket.on('connect', () => {
       console.log('connected');
       resetGame();
@@ -99,6 +122,15 @@ export default function QuizGameRoom() {
       setIsShowAnswer(true);
     });
 
+    socket.on('game-finished', (data: { message: string; playersRank: Player[] }) => {
+      setIsFinish(true);
+      setPlayers(data.playersRank);
+    });
+
+    socket.on('you-win', (data: { message: string }) => {
+      alert(data.message);
+    });
+
     return () => {
       socket.off('connect');
       socket.off('waiting-players');
@@ -107,6 +139,8 @@ export default function QuizGameRoom() {
       socket.off('start-question');
       socket.off('answer-question');
       socket.off('show-answer');
+      socket.off('game-finished');
+      socket.off('you-win');
       socket.disconnect();
     };
   }, [token]);
@@ -131,13 +165,12 @@ export default function QuizGameRoom() {
     if (nextQuestionIndex < listQuestionRef.current.length) {
       setSelectedBox(null);
     } else {
-      setIsFinish(true);
+      setIsPlay(false);
+      // setIsFinish(true);
     }
   };
 
-  // Countdown logic
   const startCountdown = (timeLeft: number) => {
-    // Clear previous interval
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
     }
@@ -161,32 +194,39 @@ export default function QuizGameRoom() {
   return (
     <SafeAreaView className='flex-1 bg-purple-100'>
       {isWaiting ? (
-        <View className='px-6 py-10'>
-          <Text className='text-2xl mb-3 font-bold'>Quiz Game Instruction</Text>
-          <Text className='text-lg'>{instruction}</Text>
+        <View className='px-6 py-10 flex flex-1 justify-between'>
+          <View>
+            <Text className='text-2xl mb-3 font-bold'>Quiz Game Instruction</Text>
+            <Text className='text-lg'>{instruction}</Text>
+          </View>
+          <View className='bg-primary w-full py-6 rounded-xl p-4 flex items-center justify-center'>
+            <Text className='font-bold text-white text-xl'>Waiting for other players...</Text>
+          </View>
         </View>
       ) : (
         <View className='flex flex-1 bg-purple-100 px-6 py-10'>
           {isFinish && showScore ? (
-            <View className='flex flex-1'>
-              <View className='flex-1 flex items-center justify-center gap-6'>
-                <Text className='text-4xl font-bold'>Quiz Completed</Text>
-                <View className='bg-primary w-full py-16 rounded-xl p-4 flex items-center justify-center'>
-                  <Text className='font-bold text-white text-2xl'>You scored {score} points!</Text>
-                </View>
-                {/* <View className='w-full items-center justify-center gap-6 rounded-3xl bg-white px-5 py-10 border'>
-                  <Text className='text-2xl font-semibold'>You win a prize!</Text>
-                  <Image className='w-40 h-40' source={{ uri: 'https://picsum.photos/id/237/200/200' }} />
-                  <Text className='text-xl font-semibold'>Voucher</Text>
-                </View> */}
-              </View>
+            <View className='flex flex-1 gap-6 bg-purple-100 px-6 py-12'>
+              <Text className='text-2xl font-bold text-center'>Leaderboard</Text>
+              <FlatList
+                className='w-full'
+                data={players}
+                renderItem={({ item }) => (
+                  <Player name={item.player.username} image={item.player.bucketId} score={item.score} />
+                )}
+                keyExtractor={(item) => item.player.userId}
+                ItemSeparatorComponent={() => <View className='h-4' />}
+              />
               <Pressable
-                className='bg-primary p-4 rounded-xl w-fit self-center items-center'
+                className='bg-primary p-4 rounded-xl w-fit flex-row self-center gap-4'
                 onPress={() => {
                   resetGame();
-                  router.push({ pathname: '/leaderboard' });
+                  router.push({
+                    pathname: '/(events)',
+                  });
                 }}>
-                <Text className='text-white font-bold text-lg'>View Leaderboard</Text>
+                <Ionicons name='home' size={24} color='white' />
+                <Text className='text-white font-bold text-lg'>Back To Home</Text>
               </Pressable>
             </View>
           ) : (
@@ -231,8 +271,16 @@ export default function QuizGameRoom() {
                       : 'bg-background border-[1px] border-primary'
                   }`}
                           key={index}
-                          onPress={() => toggleColor(index)}
-                          disabled={isShowAnswer}
+                          onPress={() => {
+                            toggleColor(index);
+                            if (currentQuestion.answer === index + 1) {
+                              socketRef.current.emit('save-score', {
+                                roomId,
+                                score: 20,
+                              });
+                            }
+                          }}
+                          disabled={isShowAnswer || selectedBox !== null}
                           style={
                             isShowAnswer && currentQuestion.answer === index + 1
                               ? { backgroundColor: 'rgb(187 247 208)' }

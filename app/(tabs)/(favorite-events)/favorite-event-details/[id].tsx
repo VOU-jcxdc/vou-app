@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { LoadingIndicator } from '~/components/LoadingIndicator';
 
 import VoucherCard from '~/components/VoucherCard';
 import { Badge } from '~/components/ui/badge';
@@ -22,8 +24,9 @@ import { getEventDateInfo } from '~/utils/DateTimeUtils';
 const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function FavoriteEventDetails() {
-  const [isFavorite, setIsFavorite] = useState(true);
   const { id } = useLocalSearchParams();
+  const [token, setToken] = useState<string>('');
+  const [isFavorite, setIsFavorite] = useState(true);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['favoriteEvent', id as string],
@@ -74,21 +77,25 @@ export default function FavoriteEventDetails() {
     },
   });
 
-  const { data: eventVouchers } = useQuery({
+  const { data: eventVouchers, isPending } = useQuery({
     queryKey: ['favorite-event-vouchers', id as string],
     queryFn: fetchEventVouchers,
   });
+
+  useEffect(() => {
+    async function getToken() {
+      const userToken = (await AsyncStorage.getItem('token')) || '';
+      setToken(userToken);
+    }
+    getToken();
+  }, []);
 
   if (!data) {
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <View className='aspect-video h-auto w-full items-center'>
-        <ActivityIndicator />
-      </View>
-    );
+  if (isLoading || configs.isLoading) {
+    return <LoadingIndicator />;
   }
 
   const { beginDate, endDate, beginTimestamp, endTimestamp, isCurrent } = getEventDateInfo(
@@ -113,7 +120,9 @@ export default function FavoriteEventDetails() {
               <Image
                 className='h-full w-full object-cover'
                 source={{
-                  uri: eventImage ? `${apiURl}/files/${data.images[0]}` : 'https://picsum.photos/id/1/200/300',
+                  uri: eventImage
+                    ? `${apiURl}/files/${data.images[0]}?${new Date().getTime()}`
+                    : 'https://picsum.photos/id/1/200/300',
                 }}
               />
             </View>
@@ -187,17 +196,27 @@ export default function FavoriteEventDetails() {
                 data?.gameId === SHAKE_GAME_ID
                   ? router.push({
                       pathname: '/(shake-game)',
-                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                      },
                     })
                   : router.push({
                       pathname: '/(quiz-game)',
-                      params: { eventId: id, configs: (configs.data?.eventConfig as number) || 0 },
+                      params: {
+                        eventId: id,
+                        configs: configs.data?.eventConfig as number,
+                        gameId: data?.gameId,
+                        token,
+                      },
                     });
               }}>
               <Text className='font-bold text-primary-foreground'>PLAY NOW</Text>
             </Button>
           </View>
         }
+        ListEmptyComponent={() => <>{isPending && <LoadingIndicator />}</>}
       />
       <Toast />
     </View>

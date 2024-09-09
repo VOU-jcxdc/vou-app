@@ -363,6 +363,19 @@ export async function combineItem({ id }: { id: string }) {
   }
 }
 
+export async function fetchRoomGame({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, eventId, gameId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/games/${gameId}`);
+  const room = response.data;
+
+  if (!room) {
+    throw new Error('Room not found');
+  }
+
+  return Promise.resolve(room as any);
+}
+
 export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
   const [, id] = queryKey;
 
