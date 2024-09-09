@@ -7,6 +7,7 @@ import {
   EventsResponse,
   EventsVouchersResponse,
   FavoriteEventsResponse,
+  IQA,
   Item,
   SearchPlayer,
   User,
@@ -360,4 +361,30 @@ export async function combineItem({ id }: { id: string }) {
     console.error('Error combining item:', error);
     throw new Error('Error combining item');
   }
+}
+
+export async function fetchRoomGame({ queryKey }: QueryFunctionContext<string[]>): Promise<any> {
+  const [, eventId, gameId] = queryKey;
+
+  const response = await doGet(`${apiUrl}/events/${eventId}/games/${gameId}`);
+  const room = response.data;
+
+  if (!room) {
+    throw new Error('Room not found');
+  }
+
+  return Promise.resolve(room as any);
+}
+
+export async function fetchQuizGameQAs({ queryKey }: QueryFunctionContext<string[]>): Promise<IQA[]> {
+  const [, id] = queryKey;
+
+  const response = await doGet(`${apiUrl}/quiz-game/questions?roomId=${id}`);
+  const questions = response.data;
+
+  if (!questions) {
+    throw new Error('Questions not found');
+  }
+
+  return Promise.resolve(questions as IQA[]);
 }

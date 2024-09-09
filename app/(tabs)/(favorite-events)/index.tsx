@@ -17,7 +17,7 @@ export default function FavoriteEvents() {
 
   if (isLoading) {
     return (
-      <View className='aspect-video h-auto w-full items-center'>
+      <View className='aspect-video mt-6 h-auto w-full items-center'>
         <Skeleton className='mb-4 h-32 w-[368px]' />
         <Skeleton className='mb-4 h-32 w-[368px]' />
         <Skeleton className='mb-4 h-32 w-[368px]' />

@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Image, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { LoadingIndicator } from '~/components/LoadingIndicator';
@@ -24,6 +25,7 @@ const apiURl = process.env.EXPO_PUBLIC_API_URL;
 
 export default function EventDetails() {
   const { id, favorite } = useLocalSearchParams();
+  const [token, setToken] = useState<string>('');
   const [isFavorite, setIsFavorite] = useState(favorite || false);
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -79,6 +81,14 @@ export default function EventDetails() {
     queryKey: ['event-vouchers', id as string],
     queryFn: fetchEventVouchers,
   });
+
+  useEffect(() => {
+    async function getToken() {
+      const userToken = (await AsyncStorage.getItem('token')) || '';
+      setToken(userToken);
+    }
+    getToken();
+  }, []);
 
   if (!data) {
     return null;
@@ -198,6 +208,7 @@ export default function EventDetails() {
                         eventId: id,
                         configs: configs.data?.eventConfig as number,
                         gameId: data?.gameId,
+                        token,
                       },
                     });
               }}>

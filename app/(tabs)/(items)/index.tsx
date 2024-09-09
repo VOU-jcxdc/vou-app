@@ -52,6 +52,7 @@ export default function Gifts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['received-requests'] });
       queryClient.invalidateQueries({ queryKey: ['account-items'] });
+      queryClient.invalidateQueries({ queryKey: ['configs'] });
     },
   });
 
