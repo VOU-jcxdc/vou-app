@@ -48,7 +48,7 @@ const useQuizGameStore = create<QuizGameStore>((set, get) => ({
   setIsCorrect: (isCorrect) => set({ isCorrect }),
   setIsShowAnswer: (isShowAnswer) => set({ isShowAnswer }),
   setScore: (score) => set({ score }),
-  incrementScore: () => set((state) => ({ score: state.score + 1 })),
+  incrementScore: () => set((state) => ({ score: state.score + 20 })),
   decrementScore: () => set((state) => ({ score: state.score - 1 })),
   resetGame: () =>
     set({

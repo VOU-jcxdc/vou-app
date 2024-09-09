@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import _ from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import io from 'socket.io-client';
 import Player from '~/components/Player';
 import { Colors } from '~/constants/Colors';
-
 import { fetchQuizGameQAs, fetchRoomGame } from '~/lib/api/api';
 import { IQA } from '~/lib/interfaces';
 import useQuizGameStore from '~/stores/quizGame';
@@ -77,7 +78,6 @@ export default function QuizGameRoom() {
 
   useEffect(() => {
     if (!roomId) return;
-    console.log('have roomId');
     const socket = io(`ws://146.190.100.11:3000/quiz-game`, {
       extraHeaders: {
         Authorization: `Bearer ${token}`,
@@ -127,7 +127,10 @@ export default function QuizGameRoom() {
     });
 
     socket.on('you-win', (data: { message: string }) => {
-      alert(data.message);
+      Toast.show({
+        type: 'info',
+        text1: data.message,
+      });
     });
 
     return () => {
@@ -153,7 +156,7 @@ export default function QuizGameRoom() {
   const handleSave = () => {
     const correctAnswer = useQuizGameStore.getState().currentQuestion?.answer;
     const chosenAnswer = useQuizGameStore.getState().userAnswer;
-    if (correctAnswer && chosenAnswer && correctAnswer === chosenAnswer + 1) {
+    if (!_.isNil(correctAnswer) && !_.isNil(chosenAnswer) && correctAnswer === chosenAnswer + 1) {
       incrementScore();
       setIsCorrect(true);
     } else {
@@ -163,9 +166,6 @@ export default function QuizGameRoom() {
     const nextQuestionIndex = useQuizGameStore.getState().questionIndex + 1;
     if (nextQuestionIndex < listQuestionRef.current.length) {
       setSelectedBox(null);
-    } else {
-      //setIsPlay(false);
-      //setIsFinish(true);
     }
   };
 
@@ -272,10 +272,16 @@ export default function QuizGameRoom() {
                           key={index}
                           onPress={() => {
                             toggleColor(index);
-                            if (currentQuestion.answer === index + 1) {
+                            if (index === currentQuestion.answer - 1) {
+                              console.log('current score', score);
                               socketRef.current.emit('save-score', {
                                 roomId,
-                                score: 20,
+                                score: score + 20,
+                              });
+                            } else {
+                              socketRef.current.emit('save-score', {
+                                roomId,
+                                score,
                               });
                             }
                           }}
